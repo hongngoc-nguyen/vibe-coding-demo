@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Navigation } from '@/components/layout/navigation'
-import { AIAnalystChat } from '@/components/chat/ai-analyst-chat'
+import { GeminiChat } from '@/components/gemini-chat'
 
 export default async function ChatPage() {
   const supabase = await createClient()
@@ -26,7 +26,7 @@ export default async function ChatPage() {
           </p>
         </div>
 
-        <AIAnalystChat />
+        <GeminiChat />
       </main>
     </div>
   )
