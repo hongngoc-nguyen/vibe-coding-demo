@@ -3,55 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Verify authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    // Return mock data directly for demo purposes
     const { searchParams } = new URL(request.url)
     const days = parseInt(searchParams.get('days') || '30')
-    const platform = searchParams.get('platform') || 'all'
-    const cluster = searchParams.get('cluster') || 'all'
 
-    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-
-    // Build query conditions
-    let platformFilter = ''
-    if (platform !== 'all') {
-      const platformMap: { [key: string]: string } = {
-        'chatgpt': 'ChatGPT',
-        'google-ai': 'Google AI',
-        'copilot': 'Microsoft Copilot'
-      }
-      platformFilter = platformMap[platform] || platform
-    }
-
-    // Get brand mentions with responses
-    let query = supabase
-      .from('brand_mentions')
-      .select(`
-        id,
-        brand_mentioned,
-        mention_count,
-        brand_citation,
-        responses!inner(response_date, platform, prompt_id, prompts!inner(prompt_cluster))
-      `)
-      .eq('brand_mentioned', true)
-      .gte('responses.response_date', startDate.toISOString())
-
-    if (platformFilter) {
-      query = query.eq('responses.platform', platformFilter)
-    }
-
-    const { data: mentions } = await query
-
-    // Process data for charts
-    const processedData = processBrandData(mentions || [], days)
-
-    return NextResponse.json(processedData)
+    return NextResponse.json(generateMockBrandData(days))
   } catch (error) {
     console.error('Error fetching brand analytics:', error)
 
@@ -132,26 +88,64 @@ function processBrandData(mentions: any[], days: number) {
 function generateMockBrandData(days: number) {
   return {
     platforms: [
-      { name: 'ChatGPT', mentions: 45, citations: 12 },
-      { name: 'Google AI', mentions: 38, citations: 8 },
-      { name: 'Microsoft Copilot', mentions: 23, citations: 5 }
+      { name: 'ChatGPT', mentions: 78, citations: 24 },
+      { name: 'Google AI', mentions: 65, citations: 18 },
+      { name: 'Microsoft Copilot', mentions: 42, citations: 12 },
+      { name: 'Claude', mentions: 38, citations: 8 },
+      { name: 'Perplexity', mentions: 24, citations: 5 }
     ],
     clusters: [
-      { name: 'Brand Research', mentions: 52 },
-      { name: 'Competitive Analysis', mentions: 34 },
-      { name: 'Product Comparison', mentions: 20 }
+      { name: 'Investment Platform Comparison', mentions: 89 },
+      { name: 'Fintech Infrastructure Analysis', mentions: 67 },
+      { name: 'Private Market Technology', mentions: 54 },
+      { name: 'Alternative Investment Solutions', mentions: 37 }
     ],
     citations: [
-      { url: 'https://techcrunch.com/ai-analysis', count: 15, title: 'AI Industry Analysis Report' },
-      { url: 'https://venturebeat.com/market-study', count: 12, title: 'Market Research Study' },
-      { url: 'https://wired.com/competitive-review', count: 8, title: 'Competitive Landscape Review' },
-      { url: 'https://forbes.com/product-guide', count: 6, title: 'Product Comparison Guide' },
-      { url: 'https://techreview.mit.edu/brand-analysis', count: 4, title: 'Brand Analysis Deep Dive' }
+      {
+        url: 'https://techcrunch.com/fintech-investment-platforms-2024',
+        count: 28,
+        title: 'Leading Fintech Investment Platforms in 2024'
+      },
+      {
+        url: 'https://venturebeat.com/anduin-private-markets-innovation',
+        count: 24,
+        title: 'Anduin Leads Private Markets Technology Innovation'
+      },
+      {
+        url: 'https://forbes.com/capital-formation-digital-transformation',
+        count: 19,
+        title: 'Digital Transformation in Capital Formation'
+      },
+      {
+        url: 'https://bloomberg.com/alternative-investment-infrastructure',
+        count: 16,
+        title: 'Alternative Investment Infrastructure Modernization'
+      },
+      {
+        url: 'https://wsj.com/private-equity-technology-platforms',
+        count: 14,
+        title: 'Private Equity Technology Platform Analysis'
+      },
+      {
+        url: 'https://pitchbook.com/fund-administration-solutions',
+        count: 12,
+        title: 'Fund Administration Technology Solutions Guide'
+      },
+      {
+        url: 'https://reuters.com/investment-management-automation',
+        count: 10,
+        title: 'Investment Management Automation Trends'
+      },
+      {
+        url: 'https://ft.com/fintech-market-leaders-2024',
+        count: 8,
+        title: 'Fintech Market Leaders and Emerging Technologies'
+      }
     ],
     metrics: {
-      uniqueMentions: 106,
-      totalCitations: 45,
-      growthRate: 15.2
+      uniqueMentions: 247,
+      totalCitations: 89,
+      growthRate: 18.5
     }
   }
 }

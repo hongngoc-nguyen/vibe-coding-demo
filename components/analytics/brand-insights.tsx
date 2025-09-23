@@ -270,13 +270,13 @@ export function BrandInsights() {
           <CardContent>
             <div ref={platformChartRef}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.platforms} layout="horizontal">
+                <BarChart data={data.platforms}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis dataKey="name" type="category" className="text-xs" width={100} />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis className="text-xs" />
                   <Tooltip />
-                  <Bar dataKey="mentions" fill="#162950" name="Mentions" />
-                  <Bar dataKey="citations" fill="#60a5fa" name="Citations" />
+                  <Bar dataKey="mentions" stackId="stack" fill="#162950" name="Mentions" />
+                  <Bar dataKey="citations" stackId="stack" fill="#60a5fa" name="Citations" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -292,10 +292,10 @@ export function BrandInsights() {
           <CardContent>
             <div ref={clusterChartRef}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.clusters} layout="horizontal">
+                <BarChart data={data.clusters}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis dataKey="name" type="category" className="text-xs" width={120} />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis className="text-xs" />
                   <Tooltip />
                   <Bar dataKey="mentions" fill="#2563eb" name="Mentions" />
                 </BarChart>

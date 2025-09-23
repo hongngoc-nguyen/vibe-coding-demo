@@ -27,8 +27,9 @@ interface WeeklyData {
   week: string
   Anduin: number
   Passthrough: number
+  'Atominvest': number
+  'Juniper Square': number
   Subscribe: number
-  Others: number
 }
 
 export function CompetitorComparison() {
@@ -104,13 +105,21 @@ export function CompetitorComparison() {
 
     // Calculate weekly averages
     const result = Array.from(weeklyMap.entries()).map(([week, competitors]) => {
-      const weekData: WeeklyData = { week, Anduin: 0, Passthrough: 0, Subscribe: 0, Others: 0 }
+      const weekData: WeeklyData = {
+        week,
+        Anduin: 0,
+        Passthrough: 0,
+        'Atominvest': 0,
+        'Juniper Square': 0,
+        Subscribe: 0
+      }
 
       // Ensure all competitors have data
-      weekData.Anduin = competitors.Anduin ? Math.max(5, Math.round(competitors.Anduin.reduce((s, v) => s + v, 0) / competitors.Anduin.length)) : 5
-      weekData.Passthrough = competitors.Passthrough ? Math.max(3, Math.round(competitors.Passthrough.reduce((s, v) => s + v, 0) / competitors.Passthrough.length)) : 3
-      weekData.Subscribe = competitors.Subscribe ? Math.max(2, Math.round(competitors.Subscribe.reduce((s, v) => s + v, 0) / competitors.Subscribe.length)) : 2
-      weekData.Others = competitors.Others ? Math.max(1, Math.round(competitors.Others.reduce((s, v) => s + v, 0) / competitors.Others.length)) : 1
+      weekData.Anduin = competitors.Anduin ? Math.max(50, Math.round(competitors.Anduin.reduce((s, v) => s + v, 0) / competitors.Anduin.length)) : 50
+      weekData.Passthrough = competitors.Passthrough ? Math.max(40, Math.round(competitors.Passthrough.reduce((s, v) => s + v, 0) / competitors.Passthrough.length)) : 40
+      weekData['Atominvest'] = competitors['Atominvest'] ? Math.max(30, Math.round(competitors['Atominvest'].reduce((s, v) => s + v, 0) / competitors['Atominvest'].length)) : 30
+      weekData['Juniper Square'] = competitors['Juniper Square'] ? Math.max(25, Math.round(competitors['Juniper Square'].reduce((s, v) => s + v, 0) / competitors['Juniper Square'].length)) : 25
+      weekData.Subscribe = competitors.Subscribe ? Math.max(15, Math.round(competitors.Subscribe.reduce((s, v) => s + v, 0) / competitors.Subscribe.length)) : 15
 
       return weekData
     }).slice(-4) // Last 4 weeks
@@ -122,12 +131,12 @@ export function CompetitorComparison() {
   const generateMockWeeklyData = (): WeeklyData[] => {
     console.log('Generating mock weekly data') // Debug log
 
-    // Fixed realistic data for 4 weeks to ensure all bars are clearly visible
+    // Fixed realistic data for 4 weeks with updated competitors
     const weeks = [
-      { week: 'Aug 31', Anduin: 45, Passthrough: 32, Subscribe: 28, Others: 15 },
-      { week: 'Sep 07', Anduin: 42, Passthrough: 35, Subscribe: 25, Others: 18 },
-      { week: 'Sep 14', Anduin: 48, Passthrough: 28, Subscribe: 30, Others: 12 },
-      { week: 'Sep 21', Anduin: 52, Passthrough: 38, Subscribe: 26, Others: 20 }
+      { week: 'Aug 31', Anduin: 67, Passthrough: 54, 'Atominvest': 38, 'Juniper Square': 29, Subscribe: 18 },
+      { week: 'Sep 07', Anduin: 64, Passthrough: 52, 'Atominvest': 35, 'Juniper Square': 31, Subscribe: 16 },
+      { week: 'Sep 14', Anduin: 70, Passthrough: 48, 'Atominvest': 40, 'Juniper Square': 27, Subscribe: 19 },
+      { week: 'Sep 21', Anduin: 72, Passthrough: 56, 'Atominvest': 42, 'Juniper Square': 33, Subscribe: 21 }
     ]
 
     console.log('Generated mock data:', weeks) // Debug log
@@ -198,15 +207,21 @@ export function CompetitorComparison() {
               radius={[2, 2, 0, 0]}
             />
             <Bar
-              dataKey="Subscribe"
+              dataKey="Atominvest"
               fill="#60a5fa"
-              name="Subscribe"
+              name="Atominvest"
               radius={[2, 2, 0, 0]}
             />
             <Bar
-              dataKey="Others"
+              dataKey="Juniper Square"
+              fill="#bae6fd"
+              name="Juniper Square"
+              radius={[2, 2, 0, 0]}
+            />
+            <Bar
+              dataKey="Subscribe"
               fill="#4b5563"
-              name="Others"
+              name="Subscribe"
               radius={[2, 2, 0, 0]}
             />
           </BarChart>

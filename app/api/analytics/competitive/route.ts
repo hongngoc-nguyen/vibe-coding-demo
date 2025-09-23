@@ -3,61 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Verify authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    // Return mock data directly for demo purposes
     const { searchParams } = new URL(request.url)
     const days = parseInt(searchParams.get('days') || '30')
-    const platform = searchParams.get('platform') || 'all'
-    const cluster = searchParams.get('cluster') || 'all'
 
-    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-    const previousPeriodStart = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000)
-
-    // Get competitor mentions for current period
-    const { data: currentMentions } = await supabase
-      .from('competitor_mentions')
-      .select(`
-        competitor_name,
-        responses!inner(response_date, platform)
-      `)
-      .eq('competitors_mentioned', true)
-      .gte('responses.response_date', startDate.toISOString())
-
-    // Get competitor mentions for previous period (for trend calculation)
-    const { data: previousMentions } = await supabase
-      .from('competitor_mentions')
-      .select(`
-        competitor_name,
-        responses!inner(response_date, platform)
-      `)
-      .eq('competitors_mentioned', true)
-      .gte('responses.response_date', previousPeriodStart.toISOString())
-      .lt('responses.response_date', startDate.toISOString())
-
-    // Get brand mentions for comparison
-    const { data: brandMentions } = await supabase
-      .from('brand_mentions')
-      .select(`
-        brand_mentioned,
-        responses!inner(response_date, platform)
-      `)
-      .eq('brand_mentioned', true)
-      .gte('responses.response_date', startDate.toISOString())
-
-    const processedData = processCompetitiveData(
-      currentMentions || [],
-      previousMentions || [],
-      brandMentions || [],
-      days
-    )
-
-    return NextResponse.json(processedData)
+    return NextResponse.json(generateMockCompetitiveData(days))
   } catch (error) {
     console.error('Error fetching competitive analytics:', error)
 
@@ -142,39 +92,125 @@ function processCompetitiveData(
 }
 
 function generateMockCompetitiveData(days: number) {
+  // Updated competitor data with the requested companies
   const competitors = [
-    { name: 'Anduin', mentions: 45, trend: 15.2, marketShare: 35, citations: 12 },
-    { name: 'Passthrough', mentions: 38, trend: -5.3, marketShare: 30, citations: 8 },
-    { name: 'Subscribe', mentions: 32, trend: 8.7, marketShare: 25, citations: 6 },
-    { name: 'Others', mentions: 13, trend: -2.1, marketShare: 10, citations: 2 }
+    {
+      name: 'Anduin',
+      mentions: 67,
+      uniqueMentions: 52,
+      trend: 18.5,
+      marketShare: 34,
+      citations: 23,
+      rank: 1
+    },
+    {
+      name: 'Passthrough',
+      mentions: 54,
+      uniqueMentions: 42,
+      trend: -3.2,
+      marketShare: 28,
+      citations: 16,
+      rank: 2
+    },
+    {
+      name: 'Atominvest',
+      mentions: 38,
+      uniqueMentions: 31,
+      trend: 12.1,
+      marketShare: 19,
+      citations: 11,
+      rank: 3
+    },
+    {
+      name: 'Juniper Square',
+      mentions: 29,
+      uniqueMentions: 23,
+      trend: 5.8,
+      marketShare: 15,
+      citations: 8,
+      rank: 4
+    },
+    {
+      name: 'Subscribe',
+      mentions: 18,
+      uniqueMentions: 14,
+      trend: -1.4,
+      marketShare: 9,
+      citations: 5,
+      rank: 5
+    }
   ]
 
   // Generate more realistic daily trends that will aggregate to visible weekly data
   const trends = []
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    const weekProgress = i % 7 / 7 // Position within the week (0-1)
 
     // Create more realistic daily variations that sum to meaningful weekly totals
     trends.push({
       date: date.toISOString().split('T')[0],
-      Anduin: Math.floor(Math.random() * 12) + 6,        // 6-18 daily -> ~84-126 weekly
-      Passthrough: Math.floor(Math.random() * 10) + 4,   // 4-14 daily -> ~56-98 weekly
-      Subscribe: Math.floor(Math.random() * 8) + 3,      // 3-11 daily -> ~42-77 weekly
-      Others: Math.floor(Math.random() * 6) + 2          // 2-8 daily -> ~28-56 weekly
+      Anduin: Math.floor(Math.random() * 12) + 8,         // 8-20 daily
+      Passthrough: Math.floor(Math.random() * 10) + 6,    // 6-16 daily
+      'Atominvest': Math.floor(Math.random() * 8) + 4,    // 4-12 daily
+      'Juniper Square': Math.floor(Math.random() * 6) + 3, // 3-9 daily
+      Subscribe: Math.floor(Math.random() * 4) + 2        // 2-6 daily
     })
   }
 
   const citations = [
-    { url: 'https://techcrunch.com/fintech-comparison', count: 18, title: 'Fintech Solutions Comparison 2024', competitors: ['Anduin', 'Passthrough'] },
-    { url: 'https://venturebeat.com/investment-platforms', count: 15, title: 'Investment Platform Analysis', competitors: ['Subscribe', 'Anduin'] },
-    { url: 'https://forbes.com/capital-markets', count: 12, title: 'Capital Markets Technology Review', competitors: ['Passthrough', 'CompetitorX'] },
-    { url: 'https://wsj.com/digital-finance', count: 10, title: 'Digital Finance Landscape', competitors: ['Anduin', 'Subscribe', 'Passthrough'] },
-    { url: 'https://bloomberg.com/fintech-trends', count: 8, title: 'Fintech Industry Trends', competitors: ['CompetitorX', 'Anduin'] }
+    {
+      url: 'https://techcrunch.com/fintech-solutions-comparison-2024',
+      count: 23,
+      title: 'Fintech Investment Platform Solutions Comparison 2024',
+      competitors: ['Anduin', 'Passthrough', 'Atominvest']
+    },
+    {
+      url: 'https://venturebeat.com/private-market-technology-review',
+      count: 18,
+      title: 'Private Market Technology Platforms Analysis',
+      competitors: ['Anduin', 'Juniper Square', 'Subscribe']
+    },
+    {
+      url: 'https://forbes.com/capital-markets-digitization',
+      count: 16,
+      title: 'Capital Markets Digitization: Leading Platforms',
+      competitors: ['Passthrough', 'Anduin', 'Atominvest']
+    },
+    {
+      url: 'https://wsj.com/alternative-investment-platforms',
+      count: 14,
+      title: 'Alternative Investment Platform Market Overview',
+      competitors: ['Anduin', 'Juniper Square', 'Passthrough']
+    },
+    {
+      url: 'https://bloomberg.com/fintech-infrastructure-trends',
+      count: 12,
+      title: 'Fintech Infrastructure Trends and Market Leaders',
+      competitors: ['Atominvest', 'Anduin', 'Subscribe']
+    },
+    {
+      url: 'https://pitchbook.com/investment-management-tech',
+      count: 10,
+      title: 'Investment Management Technology Landscape',
+      competitors: ['Passthrough', 'Juniper Square']
+    },
+    {
+      url: 'https://crunchbase.com/private-equity-software',
+      count: 9,
+      title: 'Private Equity Software Solutions Guide',
+      competitors: ['Anduin', 'Atominvest']
+    },
+    {
+      url: 'https://ft.com/fund-administration-platforms',
+      count: 8,
+      title: 'Fund Administration Platform Innovations',
+      competitors: ['Subscribe', 'Passthrough', 'Anduin']
+    }
   ]
 
   return {
     competitors,
+    trends,
     citations
   }
 }
