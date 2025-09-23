@@ -11,22 +11,28 @@ A comprehensive dashboard for monitoring Anduin's brand presence across AI searc
 - **Data Freshness Indicator**: Clear timestamp of last data update
 
 ### 📊 Analytics Deep Dive
-**Brand-Specific Insights Tab:**
-- Interactive trend charts with filtering by date range, platform, and prompt clusters
-- Breakdown metrics: mention frequency, citation URLs, platform source distribution
-- Export functionality for reports (CSV/PDF)
+**Brand Insights Tab:**
+- **Unique Mentions**: Captures unique mentions per prompt with dynamic date range tags
+- **Total Citations**: Shows all citations with dynamic date range context
+- **Growth Rate**: Dynamic percentage based on selected date range filter
+- **Horizontal Bar Charts**: Platform Distribution and Prompt Clusters for better readability
+- **Citations Table**: Complete URLs, citation counts, and external link functionality
+- **Advanced Filtering**: Date range, platform, and prompt cluster filters affect all visualizations
+- **Export Functionality**: Enhanced CSV/PDF reports with new data structure
 
-**Competitive Analysis Tab:**
-- Comparative trend charts: Anduin vs competitors vs external mentions
-- Side-by-side metrics comparison table
-- Market share visualization showing relative mention percentages
-- Competitor-specific breakdowns with drill-down capability
+**Competitor Monitoring Tab:**
+- Comprehensive filter system (date range, platform, prompt cluster)
+- Competitors table with rank, unique mentions, and citations
+- Advanced citations table with URLs, citation counts, and competitor tracking
+- Bookmark functionality for saving important citations with export capability
+- Dynamic filtering that updates all data in real-time
 
-### 🤖 AI Data Analyst Chat
-- **Google Gemini Integration**: Natural language queries about AEO data
-- **Intelligent Analysis**: Answers questions about trends, sentiment, competitive insights
-- **Structured Responses**: Bullet points with key insights, data-backed recommendations
-- **Example Queries**: "Why did our mentions drop last month?", "Which competitor is gaining traction?"
+### 🤖 AI Assistant Chat
+- **Google Gemini Integration**: Natural language queries about AEO data with real-time Supabase integration
+- **Intelligent Analysis**: Data-driven insights, strategic recommendations, and pattern analysis
+- **Enhanced Capabilities**: Analyzes brand mentions, competitor activity, citation patterns, and platform performance
+- **Structured Responses**: Actionable intelligence with data-backed recommendations
+- **Strategic Queries**: "Analyze our brand performance trends", "Which competitor poses the biggest threat?", "Recommend optimal platforms for our AEO strategy"
 
 ### 🔐 Authentication & Roles
 - **Simple Authentication**: Email/password via Supabase Auth
@@ -41,13 +47,36 @@ A comprehensive dashboard for monitoring Anduin's brand presence across AI searc
 - Brand/competitor toggle switches
 - Real-time chart updates based on filter selections
 
+## Design System
+
+### Typography
+- **Headings (h1-h3)**: IBM Plex Mono with weights 400, 500, 600, 700
+- **Body Text**: Geist Sans for optimal readability
+- **Monospace Elements**: IBM Plex Mono for data displays
+
+### Color Palette
+- **Primary Navy**: #162950 (Brand identity color for headings, navigation, primary buttons)
+- **Medium Blue**: #2563eb (Secondary elements and main data visualization)
+- **Light Blue**: #60a5fa (Tertiary elements and chart accents)
+- **Sky Blue**: #bae6fd (Background highlights and subtle accents)
+- **Supporting Grays**: Comprehensive scale from #f3f4f6 to #1f2937
+- **Slate Tones**: Professional contrast colors (#475569, #334155, #1e293b)
+
+### Visual Hierarchy
+- **Distribution**: 60% white, 30% navy blue (#162950), 10% black/dark gray
+- **Brand Consistency**: Navy blue used for all brand elements (Anduin data)
+- **Data Differentiation**: Graduated blue palette for clear visual separation
+- **Accessibility**: High contrast ratios maintained throughout
+
 ## Technology Stack
 
 - **Frontend**: Next.js 15 with TypeScript
 - **UI Components**: shadcn/ui with Tailwind CSS
+- **Typography**: IBM Plex Mono (headings), Geist Sans (body)
+- **Design System**: Custom color palette with brand consistency
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth with Row Level Security
-- **Charts**: Recharts library
+- **Charts**: Recharts library with custom brand color schemes
 - **AI Integration**: Google Gemini API
 - **Export**: xlsx (Excel), jsPDF (PDF reports)
 - **Deployment**: Vercel
@@ -126,8 +155,8 @@ Execute the SQL schema in your Supabase SQL Editor:
 - `GET /api/analytics/brand` - Detailed brand performance data
 - `GET /api/analytics/competitive` - Competitive analysis data
 
-### AI Chat
-- `POST /api/chat/analyze` - Process AI analyst queries
+### AI Assistant
+- `POST /api/chat/analyze` - Process AI Assistant queries with real-time data context
 
 ### Authentication
 - Handled automatically by Supabase Auth
@@ -138,19 +167,23 @@ Execute the SQL schema in your Supabase SQL Editor:
 ### Admin Role
 - Full dashboard access
 - User management capabilities
-- Data export (CSV/PDF)
-- AI analyst chat access
+- Data export (CSV/PDF, including bookmarks)
+- AI Assistant chat access
+- Advanced citation management
 
 ### Viewer Role
 - Dashboard and analytics access
-- Data export functionality
-- AI analyst chat access
+- Data export functionality (including bookmarked citations)
+- AI Assistant chat access
+- Citation bookmark management
 - No user management
 
 ## Export Functionality
 
 ### CSV Export
 - Multi-sheet Excel files with separate tabs for metrics, trends, platforms, competitors
+- Bookmarked citations export functionality
+- Enhanced data structure with unique mentions and total citations
 - Formatted data tables with clear headers
 - Date-stamped filenames
 
@@ -215,15 +248,37 @@ Execute the SQL schema in your Supabase SQL Editor:
 - Check browser console for client-side errors
 - Use React DevTools for component debugging
 
+## Recent Updates
+
+### Design System Implementation
+- IBM Plex Mono typography for professional headings
+- Brand-consistent color palette with navy blue (#162950) primary
+- Enhanced visual hierarchy with 60/30/10 color distribution
+- Accessible design with high contrast ratios
+
+### Enhanced Analytics Features
+- Unique mentions tracking per prompt
+- Dynamic date range indicators
+- Horizontal bar charts for improved readability
+- Advanced citation management with bookmark functionality
+- Real-time filtering across all visualizations
+
+### AI Assistant Improvements
+- Rebranded from "AI Analyst" to "AI Assistant"
+- Enhanced data integration with real-time Supabase context
+- Strategic recommendation capabilities
+- Improved query suggestions for business insights
+
 ## Future Enhancements
 
 - Real-time data streaming
 - Advanced sentiment analysis
 - Automated alerting system
 - Custom dashboard creation
-- Mobile-responsive design
+- Mobile-responsive design optimization
 - Advanced ML predictions
 - Integration with more AI platforms
+- Enhanced bookmark organization and tagging
 
 ## License
 
