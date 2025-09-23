@@ -95,10 +95,10 @@ function generateMockBrandData(days: number) {
       { name: 'Perplexity', mentions: 24, citations: 5 }
     ],
     clusters: [
-      { name: 'Investment Platform Comparison', mentions: 89 },
-      { name: 'Fintech Infrastructure Analysis', mentions: 67 },
-      { name: 'Private Market Technology', mentions: 54 },
-      { name: 'Alternative Investment Solutions', mentions: 37 }
+      { name: 'Brand Research', mentions: 89 },
+      { name: 'Competitive Analysis', mentions: 67 },
+      { name: 'Product Comparison', mentions: 54 },
+      { name: 'Market Analysis', mentions: 37 }
     ],
     citations: [
       {
