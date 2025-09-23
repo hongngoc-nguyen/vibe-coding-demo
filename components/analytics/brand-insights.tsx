@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Download, Filter, Calendar, FileText } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Download, Filter, Calendar, FileText, ExternalLink } from 'lucide-react'
 import { exportToCSV, exportToPDF } from '@/lib/export-utils'
 import { toast } from 'sonner'
 
@@ -26,15 +27,16 @@ export function BrandInsights() {
     trends: [],
     platforms: [],
     clusters: [],
+    citations: [],
     metrics: {}
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
 
   // Chart refs for PDF export
-  const trendChartRef = useRef<HTMLDivElement>(null)
   const platformChartRef = useRef<HTMLDivElement>(null)
   const clusterChartRef = useRef<HTMLDivElement>(null)
+  const citationsTableRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchBrandData()
@@ -56,7 +58,6 @@ export function BrandInsights() {
       console.error('Failed to fetch brand data:', error)
       // Set mock data for demo
       setData({
-        trends: generateMockTrendData(),
         platforms: [
           { name: 'ChatGPT', mentions: 45, citations: 12 },
           { name: 'Google AI', mentions: 38, citations: 8 },
@@ -67,9 +68,16 @@ export function BrandInsights() {
           { name: 'Competitive Analysis', mentions: 34 },
           { name: 'Product Comparison', mentions: 20 }
         ],
+        citations: [
+          { url: 'https://example.com/article1', count: 15, title: 'Industry Analysis Report' },
+          { url: 'https://example.com/article2', count: 12, title: 'Market Research Study' },
+          { url: 'https://example.com/article3', count: 8, title: 'Competitive Landscape Review' },
+          { url: 'https://example.com/article4', count: 6, title: 'Product Comparison Guide' },
+          { url: 'https://example.com/article5', count: 4, title: 'Brand Analysis Deep Dive' }
+        ],
         metrics: {
-          totalMentions: 106,
-          avgCitations: 8.3,
+          uniqueMentions: 106,
+          totalCitations: 45,
           growthRate: 15.2
         }
       })
@@ -78,18 +86,12 @@ export function BrandInsights() {
     }
   }
 
-  const generateMockTrendData = () => {
-    const data = []
+  const getDateRangeText = () => {
     const days = parseInt(filters.dateRange)
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-      data.push({
-        date: date.toISOString().split('T')[0],
-        mentions: Math.floor(Math.random() * 8) + 2,
-        citations: Math.floor(Math.random() * 3) + 1
-      })
-    }
-    return data
+    if (days === 7) return 'vs last 7 days'
+    if (days === 30) return 'vs last 30 days'
+    if (days === 90) return 'vs last 90 days'
+    return 'vs previous period'
   }
 
   const handleExportCSV = async () => {
@@ -111,9 +113,9 @@ export function BrandInsights() {
     try {
       const filename = `brand-insights-report-${new Date().toISOString().split('T')[0]}`
       const chartRefs = {
-        trendChart: trendChartRef,
         platformChart: platformChartRef,
-        clusterChart: clusterChartRef
+        clusterChart: clusterChartRef,
+        citationsTable: citationsTableRef
       }
       await exportToPDF(data, filename, chartRefs)
       toast.success('Report exported to PDF successfully!')
@@ -224,23 +226,23 @@ export function BrandInsights() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Mentions</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Unique Mentions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.metrics.totalMentions}</div>
+            <div className="text-2xl font-bold">{data.metrics.uniqueMentions}</div>
             <Badge variant="default" className="mt-1">
-              +{data.metrics.growthRate}% vs previous period
+              +{data.metrics.growthRate}% {getDateRangeText()}
             </Badge>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Avg Citations</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Total Citations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.metrics.avgCitations}</div>
+            <div className="text-2xl font-bold">{data.metrics.totalCitations}</div>
             <Badge variant="secondary" className="mt-1">
-              Per week
+              {getDateRangeText().replace('vs ', 'in ')}
             </Badge>
           </CardContent>
         </Card>
@@ -251,7 +253,7 @@ export function BrandInsights() {
           <CardContent>
             <div className="text-2xl font-bold">{data.metrics.growthRate}%</div>
             <Badge variant="default" className="mt-1">
-              Monthly
+              {getDateRangeText()}
             </Badge>
           </CardContent>
         </Card>
@@ -259,28 +261,6 @@ export function BrandInsights() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Trend Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Mention Trends</CardTitle>
-            <CardDescription>Daily mentions and citations over time</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div ref={trendChartRef}>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={data.trends}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="mentions" stroke="#3b82f6" strokeWidth={2} />
-                  <Line type="monotone" dataKey="citations" stroke="#10b981" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Platform Distribution */}
         <Card>
           <CardHeader>
@@ -290,13 +270,13 @@ export function BrandInsights() {
           <CardContent>
             <div ref={platformChartRef}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.platforms}>
+                <BarChart data={data.platforms} layout="horizontal">
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="name" className="text-xs" />
-                  <YAxis className="text-xs" />
+                  <XAxis type="number" className="text-xs" />
+                  <YAxis dataKey="name" type="category" className="text-xs" width={100} />
                   <Tooltip />
-                  <Bar dataKey="mentions" fill="#3b82f6" />
-                  <Bar dataKey="citations" fill="#10b981" />
+                  <Bar dataKey="mentions" fill="#3b82f6" name="Mentions" />
+                  <Bar dataKey="citations" fill="#10b981" name="Citations" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -312,24 +292,64 @@ export function BrandInsights() {
           <CardContent>
             <div ref={clusterChartRef}>
               <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={data.clusters}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({name, percent}) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="mentions"
-                  >
-                    {data.clusters.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
+                <BarChart data={data.clusters} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis type="number" className="text-xs" />
+                  <YAxis dataKey="name" type="category" className="text-xs" width={120} />
                   <Tooltip />
-                </PieChart>
+                  <Bar dataKey="mentions" fill="#3b82f6" name="Mentions" />
+                </BarChart>
               </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Citations Table */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Citation Sources</CardTitle>
+            <CardDescription>All citations with URLs and citation counts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div ref={citationsTableRef}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Count</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>URL</TableHead>
+                    <TableHead className="w-[100px]">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.citations?.map((citation: any, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-mono">
+                        <Badge variant="outline">{citation.count}</Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{citation.title}</TableCell>
+                      <TableCell className="text-sm text-gray-600 max-w-md truncate">
+                        {citation.url}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(citation.url, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )) || (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-gray-500">
+                        No citations available
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>

@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const days = parseInt(searchParams.get('days') || '30')
+    const platform = searchParams.get('platform') || 'all'
+    const cluster = searchParams.get('cluster') || 'all'
 
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
     const previousPeriodStart = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000)
@@ -124,9 +126,18 @@ function processCompetitiveData(
     trends.push(trendPoint)
   }
 
+  // Generate mock citations data
+  const citations = [
+    { url: 'https://techcrunch.com/fintech-comparison', count: 18, title: 'Fintech Solutions Comparison 2024', competitors: ['Anduin', 'Passthrough'] },
+    { url: 'https://venturebeat.com/investment-platforms', count: 15, title: 'Investment Platform Analysis', competitors: ['Subscribe', 'Anduin'] },
+    { url: 'https://forbes.com/capital-markets', count: 12, title: 'Capital Markets Technology Review', competitors: ['Passthrough', 'CompetitorX'] },
+    { url: 'https://wsj.com/digital-finance', count: 10, title: 'Digital Finance Landscape', competitors: ['Anduin', 'Subscribe', 'Passthrough'] },
+    { url: 'https://bloomberg.com/fintech-trends', count: 8, title: 'Fintech Industry Trends', competitors: ['CompetitorX', 'Anduin'] }
+  ]
+
   return {
     competitors,
-    trends
+    citations
   }
 }
 
@@ -154,8 +165,16 @@ function generateMockCompetitiveData(days: number) {
     })
   }
 
+  const citations = [
+    { url: 'https://techcrunch.com/fintech-comparison', count: 18, title: 'Fintech Solutions Comparison 2024', competitors: ['Anduin', 'Passthrough'] },
+    { url: 'https://venturebeat.com/investment-platforms', count: 15, title: 'Investment Platform Analysis', competitors: ['Subscribe', 'Anduin'] },
+    { url: 'https://forbes.com/capital-markets', count: 12, title: 'Capital Markets Technology Review', competitors: ['Passthrough', 'CompetitorX'] },
+    { url: 'https://wsj.com/digital-finance', count: 10, title: 'Digital Finance Landscape', competitors: ['Anduin', 'Subscribe', 'Passthrough'] },
+    { url: 'https://bloomberg.com/fintech-trends', count: 8, title: 'Fintech Industry Trends', competitors: ['CompetitorX', 'Anduin'] }
+  ]
+
   return {
     competitors,
-    trends
+    citations
   }
 }

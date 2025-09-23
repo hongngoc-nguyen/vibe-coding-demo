@@ -62,23 +62,15 @@ export async function GET(request: NextRequest) {
 }
 
 function processBrandData(mentions: any[], days: number) {
-  // Generate trend data
-  const trends = []
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    const dateStr = date.toISOString().split('T')[0]
-
-    const dayMentions = mentions.filter(m => {
-      const mentionDate = new Date(m.responses.response_date).toISOString().split('T')[0]
-      return mentionDate === dateStr
-    })
-
-    trends.push({
-      date: dateStr,
-      mentions: dayMentions.length,
-      citations: dayMentions.filter(m => m.brand_citation).length
-    })
-  }
+  // Extract unique mentions (one per prompt)
+  const uniqueMentionsMap = new Map()
+  mentions.forEach(mention => {
+    const promptId = mention.responses.prompt_id
+    if (!uniqueMentionsMap.has(promptId)) {
+      uniqueMentionsMap.set(promptId, mention)
+    }
+  })
+  const uniqueMentions = Array.from(uniqueMentionsMap.values())
 
   // Platform distribution
   const platformCounts = mentions.reduce((acc, mention) => {
@@ -109,39 +101,36 @@ function processBrandData(mentions: any[], days: number) {
     mentions
   }))
 
+  // Generate mock citations data
+  const citations = [
+    { url: 'https://techcrunch.com/ai-analysis', count: 15, title: 'AI Industry Analysis Report' },
+    { url: 'https://venturebeat.com/market-study', count: 12, title: 'Market Research Study' },
+    { url: 'https://wired.com/competitive-review', count: 8, title: 'Competitive Landscape Review' },
+    { url: 'https://forbes.com/product-guide', count: 6, title: 'Product Comparison Guide' },
+    { url: 'https://techreview.mit.edu/brand-analysis', count: 4, title: 'Brand Analysis Deep Dive' }
+  ]
+
   // Calculate metrics
-  const totalMentions = mentions.length
+  const uniqueMentionsCount = uniqueMentions.length
   const totalCitations = mentions.filter(m => m.brand_citation).length
-  const avgCitations = totalCitations / Math.max(days / 7, 1) // per week
 
   // Calculate growth (mock for now)
   const growthRate = Math.random() * 20 - 5 // -5% to +15%
 
   return {
-    trends,
     platforms,
     clusters,
+    citations,
     metrics: {
-      totalMentions,
-      avgCitations: Number(avgCitations.toFixed(1)),
+      uniqueMentions: uniqueMentionsCount,
+      totalCitations,
       growthRate: Number(growthRate.toFixed(1))
     }
   }
 }
 
 function generateMockBrandData(days: number) {
-  const trends = []
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    trends.push({
-      date: date.toISOString().split('T')[0],
-      mentions: Math.floor(Math.random() * 8) + 2,
-      citations: Math.floor(Math.random() * 3) + 1
-    })
-  }
-
   return {
-    trends,
     platforms: [
       { name: 'ChatGPT', mentions: 45, citations: 12 },
       { name: 'Google AI', mentions: 38, citations: 8 },
@@ -152,9 +141,16 @@ function generateMockBrandData(days: number) {
       { name: 'Competitive Analysis', mentions: 34 },
       { name: 'Product Comparison', mentions: 20 }
     ],
+    citations: [
+      { url: 'https://techcrunch.com/ai-analysis', count: 15, title: 'AI Industry Analysis Report' },
+      { url: 'https://venturebeat.com/market-study', count: 12, title: 'Market Research Study' },
+      { url: 'https://wired.com/competitive-review', count: 8, title: 'Competitive Landscape Review' },
+      { url: 'https://forbes.com/product-guide', count: 6, title: 'Product Comparison Guide' },
+      { url: 'https://techreview.mit.edu/brand-analysis', count: 4, title: 'Brand Analysis Deep Dive' }
+    ],
     metrics: {
-      totalMentions: 106,
-      avgCitations: 8.3,
+      uniqueMentions: 106,
+      totalCitations: 45,
       growthRate: 15.2
     }
   }
