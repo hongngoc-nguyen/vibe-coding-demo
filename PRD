@@ -1,0 +1,154 @@
+# AEO Brand Monitoring Dashboard - MVP PRD
+
+## Problem Statement
+Internal marketing teams and executives lack a centralized platform to monitor Anduin's brand presence compared to competitors across search LLM platforms. Without consolidated AEO (Answer Engine Optimization) insights, teams cannot effectively track brand mention trends, understand competitive positioning, or make data-driven content strategy decisions based on how AI search engines surface their brand.
+
+## Target User
+- **Primary**: Internal marketing team members (Admin role)
+- **Secondary**: Executive members (Viewer role)
+- **User Context**: Teams need quick, actionable insights from AEO data to inform marketing content strategy and competitive positioning
+
+## Core Features
+
+### 1. Dashboard Overview (Home Page)
+- **Brand Performance Summary**: Key metrics cards showing total mentions, trend direction, and competitive ranking
+- **Primary Visualization**: Trend line chart showing Anduin mentions over time with weekly data points
+- **Quick Insights Panel**: AI-generated summary of latest trends and notable changes
+- **Data Freshness Indicator**: Clear timestamp of last data update (weekly refresh cycle)
+
+### 2. Analytics Deep Dive (Feature Page)
+**Tab 1: Brand-Specific Insights**
+- Interactive trend chart: Anduin appearance over time by prompt clusters
+- Breakdown metrics: mention frequency, citation URLs, platform source distribution
+- Filter options: date range, prompt clusters, platform sources
+- Export functionality for reports (CSV/PDF)
+
+**Tab 2: Competitive Analysis**
+- Comparative trend chart: Anduin vs competitors vs external mentions
+- Side-by-side metrics comparison table
+- Market share visualization showing relative mention percentages
+- Competitor-specific breakdowns with drill-down capability
+
+### 3. User Authentication & Role Management
+- Simple email/password authentication via Supabase Auth
+- **Admin Role**: Full dashboard access + user management capabilities
+- **Viewer Role**: Dashboard access + export functionality (no user management)
+- Basic profile management
+
+### 4. Interactive Data Filtering
+- Date range selector (last 30 days, 90 days, custom range)
+- Prompt cluster filtering (multi-select dropdown)
+- Platform source filtering (search engines, AI platforms)
+- Brand/competitor toggle switches
+- Real-time chart updates based on filter selections
+
+## AI Integration (Google Gemini)
+**AI Data Analyst Chat Feature**
+- **Purpose**: Act as intelligent analyst to answer questions about AEO data beyond standard visualizations
+- **Functionality**: 
+  - Users can ask natural language questions about trends, sentiment, competitive insights
+  - AI analyzes available data (mentions, trends, competitor performance) to provide structured responses
+  - Response format: Bullet points with key insights, data-backed recommendations, trend explanations
+- **Example Queries**: "Why did our mentions drop last month?", "Which competitor is gaining the most traction?", "What platforms should we focus on?"
+- **Data Context**: AI has access to all stored metrics for comprehensive analysis
+
+## Data Model (Supabase Tables)
+
+### `prompts`
+- `prompt_id` (UUID, primary key)
+- `prompt_text` (text)
+- `prompt_cluster` (text: 'Brand Research', 'Competitive Analysis', etc.)
+- `prompt_sequence_count` (integer - count based on insertion instances)
+- `added_date` (timestamp)
+- `priority` (integer)
+- `created_at` (timestamp)
+
+### `responses`
+- `response_id` (UUID, primary key)
+- `prompt_id` (UUID, foreign key → prompts.prompt_id)
+- `platform` (text: 'ChatGPT', 'Google AI', 'Microsoft Copilot')
+- `response_date` (timestamp)
+- `execution_time` (integer, milliseconds - how long AI took to respond)
+- `response_length` (integer, word count)
+- `response_status` (text: 'Success', 'Failed')
+- `full_response_text` (text)
+- `created_at` (timestamp)
+
+### `brand_mentions`
+- `id` (UUID, primary key)
+- `response_id` (UUID, foreign key → responses.response_id)
+- `brand_mentioned` (boolean)
+- `mention_count` (integer, nullable - multiple mentions in same response)
+- `mention_text` (text, nullable - full sentence/paragraph containing mention)
+- `brand_citation` (boolean, nullable)
+- `cited_url` (text, nullable)
+- `created_at` (timestamp)
+
+### `competitor_mentions`
+- `id` (UUID, primary key)
+- `response_id` (UUID, foreign key → responses.response_id)
+- `competitors_mentioned` (boolean)
+- `competitor_name` (text, nullable - 'Passthrough', 'Subscribe', etc.)
+- `mention_text` (text, nullable - full sentence/paragraph containing mention)
+- `cited_url` (text, nullable)
+- `created_at` (timestamp)
+
+### `external_mentions`
+- `id` (UUID, primary key)
+- `response_id` (UUID, foreign key → responses.response_id)
+- `external_mentioned` (boolean)
+- `external_name` (text, nullable - detected 3rd party name)
+- `cited_url` (text, nullable)
+- `created_at` (timestamp)
+
+### `users`
+- `id` (UUID, primary key)
+- `email` (text, unique)
+- `role` (text: 'admin', 'viewer')
+- `full_name` (text)
+- `created_at` (timestamp)
+- `last_login` (timestamp)
+
+### `competitors`
+- `id` (UUID, primary key)
+- `competitor_name` (text, unique)
+- `industry_category` (text, nullable)
+- `is_active` (boolean, default true)
+- `created_at` (timestamp)
+
+## Technical Requirements
+
+### Frontend (Next.js + shadcn-ui)
+- **Home Page**: Dashboard overview with key metrics and primary trend chart
+- **Analytics Page**: Deep dive with tabbed interface for brand vs competitive insights
+- Responsive design optimized for desktop use
+- Interactive charts using Recharts library
+- Export functionality for data and reports
+
+### Backend (Next.js API Routes)
+- **Required Endpoint**: `/api/aeo-data` - Aggregates and returns filtered AEO metrics
+- `/api/auth` - Handle role-based authentication
+- `/api/chat` - Process AI analyst queries with Gemini integration
+- Weekly data refresh mechanism to pull from automation pipeline
+
+### Deployment (Vercel)
+- Environment variables for Supabase and Gemini API keys
+- GitHub repository with proper documentation
+- Accessible public URL for internal team access
+
+## Success Criteria
+- **User Adoption**: Marketing team and executives can independently access and interpret brand monitoring data within 5 minutes of first login
+- **Actionable Insights**: Users can identify top 3 competitive threats and brand performance trends from dashboard within 2 minutes
+- **AI Enhancement Value**: 80% of AI analyst queries provide relevant, structured insights that aren't immediately visible from standard charts
+
+## Out of Scope (MVP)
+- Advanced user management (password reset, SSO integration)
+- Real-time data streaming (weekly batch updates sufficient)
+- Mobile optimization
+- Advanced analytics (forecasting, ML predictions)
+- Automated alerting/notifications
+- Data export scheduling
+- Custom dashboard creation
+- Row Level Security policies
+- Multi-tenant architecture
+- Advanced sentiment analysis beyond basic scores
