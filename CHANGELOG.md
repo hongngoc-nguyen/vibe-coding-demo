@@ -8,24 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2025-09-23
 
 ### Added
+- **Week-over-Week Competitor Bar Chart**: New side-by-side chart showing brand vs competitors mentions
+- **Enhanced Dashboard Layout**: Reorganized dashboard with side-by-side charts and full-width insights
+- **Interactive Bar Chart**: Color-coded competitors with tooltips and responsive design
 - **Real Supabase Integration**: Configured production Supabase database connection
 - **Enhanced Error Handling**: Improved forgot password functionality with graceful fallback for demo mode
 - **Visual Feedback**: Added tooltips and status indicators for authentication features
 
 ### Changed
+- **Dashboard Grid Layout**: Updated to display Brand Trends and Competitor Comparison side-by-side
+- **Chart Data Processing**: Enhanced competitive analytics API with better mock data generation
+- **Insights Section**: Moved to full-width layout below the charts
 - **Environment Configuration**: Updated with real Supabase credentials and service role key
 - **Authentication Flow**: Enhanced password reset with better error messages and demo mode detection
 - **User Experience**: Improved login page with contextual help and visual indicators
 
 ### Fixed
+- **Chart Data Visibility**: Ensured all competitor bars appear with meaningful values
+- **Mock Data Generation**: Enhanced daily-to-weekly data aggregation for realistic trends
 - **Password Reset Error**: Resolved "Failed to fetch" errors with proper demo mode detection
 - **Environment Detection**: Added runtime checks for placeholder vs real Supabase configuration
 
 ### Technical Details
+- Created new `CompetitorComparison` component with Recharts bar chart
+- Enhanced competitive analytics API endpoint with improved mock data ranges
+- Implemented week-over-week data processing and aggregation
+- Added comprehensive debugging and error handling
 - Connected to production Supabase project: `lqithgkebyqogoeynfmp.supabase.co`
 - Updated environment variables with real anon and service role keys
-- Enhanced error handling in `handleForgotPassword()` function
-- Added runtime environment detection and graceful degradation
 
 ## [v1.0.0] - 2025-09-23
 

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Navigation } from '@/components/layout/navigation'
 import { DashboardMetrics } from '@/components/dashboard/metrics'
 import { BrandTrendChart } from '@/components/dashboard/trend-chart'
+import { CompetitorComparison } from '@/components/dashboard/competitor-comparison'
 import { QuickInsights } from '@/components/dashboard/quick-insights'
 
 export default async function DashboardPage() {
@@ -28,11 +29,15 @@ export default async function DashboardPage() {
 
         <DashboardMetrics />
 
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          <BrandTrendChart />
+          <CompetitorComparison />
+        </div>
+
+        {/* Insights Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-          <div className="lg:col-span-2">
-            <BrandTrendChart />
-          </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-3">
             <QuickInsights />
           </div>
         </div>

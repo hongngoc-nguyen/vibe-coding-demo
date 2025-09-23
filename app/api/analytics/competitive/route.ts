@@ -138,15 +138,19 @@ function generateMockCompetitiveData(days: number) {
     { name: 'Others', mentions: 13, trend: -2.1, marketShare: 10, citations: 2 }
   ]
 
+  // Generate more realistic daily trends that will aggregate to visible weekly data
   const trends = []
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const weekProgress = i % 7 / 7 // Position within the week (0-1)
+
+    // Create more realistic daily variations that sum to meaningful weekly totals
     trends.push({
       date: date.toISOString().split('T')[0],
-      Anduin: Math.floor(Math.random() * 8) + 3,
-      Passthrough: Math.floor(Math.random() * 6) + 2,
-      Subscribe: Math.floor(Math.random() * 5) + 2,
-      Others: Math.floor(Math.random() * 3) + 1
+      Anduin: Math.floor(Math.random() * 12) + 6,        // 6-18 daily -> ~84-126 weekly
+      Passthrough: Math.floor(Math.random() * 10) + 4,   // 4-14 daily -> ~56-98 weekly
+      Subscribe: Math.floor(Math.random() * 8) + 3,      // 3-11 daily -> ~42-77 weekly
+      Others: Math.floor(Math.random() * 6) + 2          // 2-8 daily -> ~28-56 weekly
     })
   }
 
