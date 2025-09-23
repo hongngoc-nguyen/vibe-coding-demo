@@ -59,6 +59,16 @@ export default function LoginPage() {
       return
     }
 
+    // Check if Supabase is properly configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      toast.error('Password reset is not available in demo mode. Please use the Demo Login button instead.', {
+        duration: 5000,
+        description: 'To enable password reset, configure your Supabase credentials in .env.local'
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -67,7 +77,14 @@ export default function LoginPage() {
       if (error) throw error
       toast.success('Password reset email sent! Check your inbox.')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send reset email')
+      if (error.message?.includes('Failed to fetch')) {
+        toast.error('Password reset is not available in demo mode. Please use the Demo Login button instead.', {
+          duration: 5000,
+          description: 'To enable password reset, configure your Supabase credentials in .env.local'
+        })
+      } else {
+        toast.error(error.message || 'Failed to send reset email')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -132,10 +149,13 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-blue-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
                   disabled={isLoading}
+                  title={process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+                    ? 'Not available in demo mode - use Demo Login instead'
+                    : 'Send password reset email'}
                 >
-                  Forgot your password?
+                  Forgot your password? {process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') && '(Demo mode)'}
                 </button>
               </div>
             </div>
