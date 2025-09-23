@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.GOOGLE_GEMINI_API_KEY) {
       return NextResponse.json({
-        response: "I'm sorry, but the Google Gemini API key is not configured. Please set up the GOOGLE_GEMINI_API_KEY environment variable to enable AI analysis.",
+        response: "I'm sorry, but the Google Gemini API key is not configured. Please set up the GOOGLE_GEMINI_API_KEY environment variable to enable AI Assistant analysis.",
         insights: []
       })
     }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     console.error('Error in AI analysis:', error)
     return NextResponse.json(
       {
-        response: "I apologize, but I encountered an error while analyzing your request. Please try again or rephrase your question.",
+        response: "I apologize, but I encountered an error while processing your request. As your AI Assistant, I'm here to help analyze your AEO data and provide insights. Please try again or rephrase your question."
         insights: []
       },
       { status: 500 }
@@ -113,7 +113,7 @@ function createAnalysisPrompt(userMessage: string, aeoData: any, context: any[])
     .map(msg => msg.content)
     .join('\n')
 
-  return `You are an expert AEO (Answer Engine Optimization) data analyst for Anduin, a legal tech company. You help analyze brand monitoring data across AI platforms like ChatGPT, Google AI, and Microsoft Copilot.
+  return `You are an AI Assistant specializing in AEO (Answer Engine Optimization) for Anduin, a legal tech company. You provide intelligent insights, strategic recommendations, and pattern analysis using real-time data from Supabase. You help users understand their brand monitoring performance across AI platforms like ChatGPT, Google AI, and Microsoft Copilot.
 
 CURRENT DATA CONTEXT:
 Brand Mentions (Last 30 days): ${aeoData.brandMentions.length} total mentions

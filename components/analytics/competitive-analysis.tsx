@@ -200,8 +200,8 @@ export function CompetitiveAnalysis() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 heading text-brand-navy">
+            <Filter className="h-5 w-5 text-brand-navy" />
             Filters
           </CardTitle>
         </CardHeader>
@@ -283,7 +283,7 @@ export function CompetitiveAnalysis() {
       {/* Competitors Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Competitor Monitoring</CardTitle>
+          <CardTitle className="heading text-brand-navy">Competitor Monitoring</CardTitle>
           <CardDescription>Unique mention counts for predefined competitors ({getDateRangeText()})</CardDescription>
         </CardHeader>
         <CardContent>
@@ -301,7 +301,7 @@ export function CompetitiveAnalysis() {
                 {competitors.map((competitor, index) => (
                   <TableRow key={competitor.name}>
                     <TableCell className="font-mono">
-                      <Badge variant="outline">#{index + 1}</Badge>
+                      <Badge variant="outline" className="border-brand-navy text-brand-navy">#{index + 1}</Badge>
                     </TableCell>
                     <TableCell className="font-medium">{competitor.name}</TableCell>
                     <TableCell className="text-center font-mono">{competitor.mentions}</TableCell>
@@ -317,7 +317,7 @@ export function CompetitiveAnalysis() {
       {/* Citations Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Citation Sources</CardTitle>
+          <CardTitle className="heading text-brand-navy">Citation Sources</CardTitle>
           <CardDescription>
             All citations with URLs, citation counts, and mentioned competitors.
             Bookmark citations for later reference or export.
@@ -339,7 +339,7 @@ export function CompetitiveAnalysis() {
                 {citations.map((citation, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-mono">
-                      <Badge variant="outline">{citation.count}</Badge>
+                      <Badge variant="outline" className="border-brand-blue text-brand-blue">{citation.count}</Badge>
                     </TableCell>
                     <TableCell className="font-medium">{citation.title}</TableCell>
                     <TableCell className="text-sm text-gray-600 max-w-md truncate">
@@ -348,7 +348,7 @@ export function CompetitiveAnalysis() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {citation.competitors.map((comp, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
+                          <Badge key={idx} variant="secondary" className="text-xs bg-brand-sky text-brand-slate-700">
                             {comp}
                           </Badge>
                         ))}

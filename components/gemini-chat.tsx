@@ -49,18 +49,19 @@ export function GeminiChat() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
-          Gemini AI Assistant
+        <CardTitle className="flex items-center gap-2 heading text-brand-navy">
+          <Sparkles className="h-5 w-5 text-brand-navy" />
+          AI Assistant
         </CardTitle>
-        <CardDescription>
-          Ask questions and get AI-powered insights for your AEO campaigns
+        <CardDescription className="text-gray-600">
+          Get intelligent insights, strategic recommendations, and data-driven analysis for your AEO performance.
+          Powered by real-time Supabase data and advanced AI capabilities.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Textarea
-            placeholder="Ask me anything about your AEO strategies..."
+            placeholder="Ask me anything about your AEO performance, data trends, competitor analysis, or get strategic recommendations..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="min-h-[100px]"
@@ -69,7 +70,7 @@ export function GeminiChat() {
           <Button
             onClick={handleSubmit}
             disabled={loading || !prompt.trim()}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto bg-brand-navy hover:bg-brand-navy/90 text-brand-white"
           >
             {loading ? (
               <>
@@ -94,7 +95,7 @@ export function GeminiChat() {
         {response && (
           <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4">
             <h3 className="font-semibold mb-2 text-blue-900 dark:text-blue-300">
-              AI Response:
+              AI Assistant Response:
             </h3>
             <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
               {response}

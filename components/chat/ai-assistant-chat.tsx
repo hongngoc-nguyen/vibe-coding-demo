@@ -22,25 +22,26 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  "Why did our mentions drop last month?",
-  "Which competitor is gaining the most traction?",
-  "What platforms should we focus on?",
-  "How do our citations compare to competitors?",
-  "What's our strongest performing prompt cluster?"
+  "Analyze our brand performance trends from last month",
+  "Which competitor poses the biggest threat and why?",
+  "Recommend optimal platforms for our AEO strategy",
+  "Compare our citation patterns vs competitors",
+  "Identify high-performing content opportunities",
+  "What insights can you derive from our data patterns?"
 ]
 
-export function AIAnalystChat() {
+export function AIAssistantChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm your AI Data Analyst. I can help you understand your AEO performance data, analyze trends, and provide strategic insights. What would you like to know about your brand monitoring data?",
+      content: "Hello! I'm your AI Assistant, powered by real-time data from Supabase and advanced AI analysis. I can help you uncover insights, identify patterns, and provide strategic recommendations based on your AEO performance data. I analyze brand mentions, competitor activity, citation patterns, and platform performance to give you actionable intelligence. What would you like to explore?",
       sender: 'ai',
       timestamp: new Date(),
       insights: [
         {
-          type: 'trend',
-          title: 'Recent Growth',
-          description: 'Brand mentions increased 15% this week'
+          type: 'recommendation',
+          title: 'Data-Driven Insights',
+          description: 'I provide personalized recommendations based on your actual performance data'
         }
       ]
     }
@@ -166,7 +167,7 @@ export function AIAnalystChat() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            AI Data Analyst
+            AI Assistant
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto space-y-4">
@@ -264,7 +265,7 @@ export function AIAnalystChat() {
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask about your AEO data..."
+              placeholder="Ask me anything about your AEO performance, trends, or get strategic recommendations..."
               disabled={isLoading}
               className="flex-1"
             />

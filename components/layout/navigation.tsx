@@ -35,7 +35,7 @@ export function Navigation({ user, userRole }: NavigationProps) {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/chat', label: 'AI Analyst', icon: MessageSquare },
+    { href: '/chat', label: 'AI Assistant', icon: MessageSquare },
   ]
 
   if (userRole === 'admin') {
@@ -48,8 +48,8 @@ export function Navigation({ user, userRole }: NavigationProps) {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-8">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 to-blue-600" />
-              <span className="text-xl font-bold">AEO Dashboard</span>
+              <div className="h-8 w-8 rounded bg-brand-navy" />
+              <span className="text-xl font-bold heading text-brand-navy">AEO Dashboard</span>
             </Link>
             <div className="hidden md:flex space-x-1">
               {navItems.map((item) => {
@@ -60,8 +60,8 @@ export function Navigation({ user, userRole }: NavigationProps) {
                     href={item.href}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       pathname === item.href
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-brand-navy text-brand-white'
+                        : 'text-brand-navy hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="h-4 w-4" />

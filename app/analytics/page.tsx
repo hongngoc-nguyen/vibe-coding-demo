@@ -20,7 +20,7 @@ export default async function AnalyticsPage() {
       <Navigation user={user} userRole={userData?.role || 'viewer'} />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+          <h1 className="text-3xl font-bold text-brand-navy heading">Analytics Dashboard</h1>
           <p className="text-gray-600 mt-2">
             Deep dive into brand performance and competitive analysis
           </p>

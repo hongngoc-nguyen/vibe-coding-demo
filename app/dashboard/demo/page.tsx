@@ -12,18 +12,18 @@ function DemoNavigation() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 to-blue-600" />
-              <span className="text-xl font-bold">AEO Dashboard</span>
+              <div className="h-8 w-8 rounded bg-brand-navy" />
+              <span className="text-xl font-bold heading text-brand-navy">AEO Dashboard</span>
             </div>
             <div className="hidden md:flex space-x-1">
-              <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium bg-blue-50 text-blue-600">
+              <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium bg-brand-navy text-brand-white">
                 <span>Dashboard</span>
               </div>
-              <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-brand-navy hover:bg-gray-50">
                 <span>Analytics</span>
               </div>
-              <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <span>AI Analyst</span>
+              <div className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-brand-navy hover:bg-gray-50">
+                <span>AI Assistant</span>
               </div>
             </div>
           </div>
@@ -45,7 +45,7 @@ export default function DemoDashboardPage() {
       <DemoNavigation />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Brand Monitoring Dashboard</h1>
+          <h1 className="text-3xl font-bold text-brand-navy heading">Brand Monitoring Dashboard</h1>
           <p className="text-gray-600 mt-2">Track Anduin's AEO performance across platforms</p>
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-blue-800 text-sm">

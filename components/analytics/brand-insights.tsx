@@ -127,7 +127,7 @@ export function BrandInsights() {
     }
   }
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  const COLORS = ['#162950', '#2563eb', '#60a5fa', '#bae6fd', '#4b5563', '#374151', '#475569', '#334155']
 
   if (isLoading) {
     return (
@@ -151,8 +151,8 @@ export function BrandInsights() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 heading text-brand-navy">
+            <Filter className="h-5 w-5 text-brand-navy" />
             Filters
           </CardTitle>
         </CardHeader>
@@ -226,7 +226,7 @@ export function BrandInsights() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Unique Mentions</CardTitle>
+            <CardTitle className="text-sm font-medium text-brand-navy heading">Unique Mentions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.metrics.uniqueMentions}</div>
@@ -237,7 +237,7 @@ export function BrandInsights() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Citations</CardTitle>
+            <CardTitle className="text-sm font-medium text-brand-navy heading">Total Citations</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.metrics.totalCitations}</div>
@@ -248,7 +248,7 @@ export function BrandInsights() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Growth Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-brand-navy heading">Growth Rate</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.metrics.growthRate}%</div>
@@ -264,7 +264,7 @@ export function BrandInsights() {
         {/* Platform Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Platform Distribution</CardTitle>
+            <CardTitle className="heading text-brand-navy">Platform Distribution</CardTitle>
             <CardDescription>Mentions across different AI platforms</CardDescription>
           </CardHeader>
           <CardContent>
@@ -275,8 +275,8 @@ export function BrandInsights() {
                   <XAxis type="number" className="text-xs" />
                   <YAxis dataKey="name" type="category" className="text-xs" width={100} />
                   <Tooltip />
-                  <Bar dataKey="mentions" fill="#3b82f6" name="Mentions" />
-                  <Bar dataKey="citations" fill="#10b981" name="Citations" />
+                  <Bar dataKey="mentions" fill="#162950" name="Mentions" />
+                  <Bar dataKey="citations" fill="#60a5fa" name="Citations" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -286,7 +286,7 @@ export function BrandInsights() {
         {/* Prompt Clusters */}
         <Card>
           <CardHeader>
-            <CardTitle>Prompt Clusters</CardTitle>
+            <CardTitle className="heading text-brand-navy">Prompt Clusters</CardTitle>
             <CardDescription>Mentions by prompt category</CardDescription>
           </CardHeader>
           <CardContent>
@@ -297,7 +297,7 @@ export function BrandInsights() {
                   <XAxis type="number" className="text-xs" />
                   <YAxis dataKey="name" type="category" className="text-xs" width={120} />
                   <Tooltip />
-                  <Bar dataKey="mentions" fill="#3b82f6" name="Mentions" />
+                  <Bar dataKey="mentions" fill="#2563eb" name="Mentions" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -307,7 +307,7 @@ export function BrandInsights() {
         {/* Citations Table */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Citation Sources</CardTitle>
+            <CardTitle className="heading text-brand-navy">Citation Sources</CardTitle>
             <CardDescription>All citations with URLs and citation counts</CardDescription>
           </CardHeader>
           <CardContent>
@@ -325,7 +325,7 @@ export function BrandInsights() {
                   {data.citations?.map((citation: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell className="font-mono">
-                        <Badge variant="outline">{citation.count}</Badge>
+                        <Badge variant="outline" className="border-brand-navy text-brand-navy">{citation.count}</Badge>
                       </TableCell>
                       <TableCell className="font-medium">{citation.title}</TableCell>
                       <TableCell className="text-sm text-gray-600 max-w-md truncate">

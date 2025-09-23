@@ -143,7 +143,7 @@ export function CompetitorComparison() {
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-navy"></div>
           </div>
         </CardContent>
       </Card>
@@ -169,7 +169,7 @@ export function CompetitorComparison() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Brand vs. Competitors</CardTitle>
+        <CardTitle className="heading text-brand-navy">Brand vs. Competitors</CardTitle>
         <CardDescription>
           Week-over-week mentions comparison across all platforms
         </CardDescription>
@@ -187,25 +187,25 @@ export function CompetitorComparison() {
             <Legend />
             <Bar
               dataKey="Anduin"
-              fill="#3b82f6"
+              fill="#162950"
               name="Anduin"
               radius={[2, 2, 0, 0]}
             />
             <Bar
               dataKey="Passthrough"
-              fill="#ef4444"
+              fill="#2563eb"
               name="Passthrough"
               radius={[2, 2, 0, 0]}
             />
             <Bar
               dataKey="Subscribe"
-              fill="#f59e0b"
+              fill="#60a5fa"
               name="Subscribe"
               radius={[2, 2, 0, 0]}
             />
             <Bar
               dataKey="Others"
-              fill="#6b7280"
+              fill="#4b5563"
               name="Others"
               radius={[2, 2, 0, 0]}
             />

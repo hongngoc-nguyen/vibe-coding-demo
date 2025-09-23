@@ -20,10 +20,7 @@ export default async function ChatPage() {
       <Navigation user={user} userRole={userData?.role || 'viewer'} />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">AI Data Analyst</h1>
-          <p className="text-gray-600 mt-2">
-            Ask questions about your AEO data and get intelligent insights
-          </p>
+          <h1 className="text-3xl font-bold text-brand-navy heading">AI Assistant</h1>
         </div>
 
         <GeminiChat />
