@@ -1,0 +1,285 @@
+# AEO Brand Monitoring Dashboard
+
+A comprehensive dashboard for monitoring Anduin's brand presence across AI search platforms (ChatGPT, Google AI, Microsoft Copilot) with competitive analysis and AI-powered insights.
+
+## Features
+
+### 🏠 Dashboard Overview
+- **Brand Performance Summary**: Key metrics cards showing total mentions, trend direction, and competitive ranking
+- **Primary Visualization**: Interactive trend line chart showing Anduin mentions over time
+- **Quick Insights Panel**: AI-generated summary of latest trends and notable changes
+- **Data Freshness Indicator**: Clear timestamp of last data update
+
+### 📊 Analytics Deep Dive
+**Brand Insights Tab:**
+- **Unique Mentions**: Captures unique mentions per prompt with dynamic date range tags
+- **Total Citations**: Shows all citations with dynamic date range context
+- **Growth Rate**: Dynamic percentage based on selected date range filter
+- **Horizontal Bar Charts**: Platform Distribution and Prompt Clusters for better readability
+- **Citations Table**: Complete URLs, citation counts, and external link functionality
+- **Advanced Filtering**: Date range, platform, and prompt cluster filters affect all visualizations
+- **Export Functionality**: Enhanced CSV/PDF reports with new data structure
+
+**Competitor Monitoring Tab:**
+- Comprehensive filter system (date range, platform, prompt cluster)
+- Competitors table with rank, unique mentions, and citations
+- Advanced citations table with URLs, citation counts, and competitor tracking
+- Bookmark functionality for saving important citations with export capability
+- Dynamic filtering that updates all data in real-time
+
+### 🤖 AI Assistant Chat
+- **Google Gemini Integration**: Natural language queries about AEO data with real-time Supabase integration
+- **Intelligent Analysis**: Data-driven insights, strategic recommendations, and pattern analysis
+- **Enhanced Capabilities**: Analyzes brand mentions, competitor activity, citation patterns, and platform performance
+- **Structured Responses**: Actionable intelligence with data-backed recommendations
+- **Strategic Queries**: "Analyze our brand performance trends", "Which competitor poses the biggest threat?", "Recommend optimal platforms for our AEO strategy"
+
+### 🔐 Authentication & Roles
+- **Simple Authentication**: Email/password via Supabase Auth
+- **Admin Role**: Full dashboard access + user management capabilities
+- **Viewer Role**: Dashboard access + export functionality
+- **Profile Management**: Basic user profile settings
+
+### 📈 Interactive Data Filtering
+- Date range selector (last 30 days, 90 days, custom range)
+- Prompt cluster filtering (multi-select dropdown)
+- Platform source filtering (search engines, AI platforms)
+- Brand/competitor toggle switches
+- Real-time chart updates based on filter selections
+
+## Design System
+
+### Typography
+- **Headings (h1-h3)**: IBM Plex Mono with weights 400, 500, 600, 700
+- **Body Text**: Geist Sans for optimal readability
+- **Monospace Elements**: IBM Plex Mono for data displays
+
+### Color Palette
+- **Primary Navy**: #162950 (Brand identity color for headings, navigation, primary buttons)
+- **Medium Blue**: #2563eb (Secondary elements and main data visualization)
+- **Light Blue**: #60a5fa (Tertiary elements and chart accents)
+- **Sky Blue**: #bae6fd (Background highlights and subtle accents)
+- **Supporting Grays**: Comprehensive scale from #f3f4f6 to #1f2937
+- **Slate Tones**: Professional contrast colors (#475569, #334155, #1e293b)
+
+### Visual Hierarchy
+- **Distribution**: 60% white, 30% navy blue (#162950), 10% black/dark gray
+- **Brand Consistency**: Navy blue used for all brand elements (Anduin data)
+- **Data Differentiation**: Graduated blue palette for clear visual separation
+- **Accessibility**: High contrast ratios maintained throughout
+
+## Technology Stack
+
+- **Frontend**: Next.js 15 with TypeScript
+- **UI Components**: shadcn/ui with Tailwind CSS
+- **Typography**: IBM Plex Mono (headings), Geist Sans (body)
+- **Design System**: Custom color palette with brand consistency
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth with Row Level Security
+- **Charts**: Recharts library with custom brand color schemes
+- **AI Integration**: Google Gemini API
+- **Export**: xlsx (Excel), jsPDF (PDF reports)
+- **Deployment**: Vercel
+
+## Database Schema
+
+### Core Tables
+- `users` - User profiles and roles (extends Supabase auth)
+- `prompts` - AI prompts with clustering and sequence tracking
+- `responses` - AI platform responses with execution metrics
+- `brand_mentions` - Anduin brand mentions with citation tracking
+- `competitor_mentions` - Competitor mentions and analysis
+- `external_mentions` - Third-party mentions tracking
+- `competitors` - Competitor configuration and metadata
+
+### Views & Analytics
+- `brand_performance` - Aggregated weekly brand performance metrics
+- `competitive_analysis` - Comparative analysis across competitors
+
+## Environment Setup
+
+Create a `.env.local` file with the following variables:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Google Gemini API
+GOOGLE_GEMINI_API_KEY=your_google_gemini_api_key
+
+# Application Settings
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+## Installation & Development
+
+1. **Clone and install dependencies:**
+```bash
+npm install
+```
+
+2. **Set up Supabase:**
+   - Create a new Supabase project
+   - Run the SQL schema from `supabase/schema.sql`
+   - Configure your environment variables
+
+3. **Configure Google Gemini:**
+   - Get API key from Google AI Studio
+   - Add to environment variables
+
+4. **Run development server:**
+```bash
+npm run dev
+```
+
+5. **Open in browser:**
+   Navigate to `http://localhost:3000`
+
+## Database Setup
+
+Execute the SQL schema in your Supabase SQL Editor:
+
+```sql
+-- Run the complete schema from supabase/schema.sql
+-- This includes tables, views, RLS policies, and sample data
+```
+
+## API Endpoints
+
+### Metrics & Analytics
+- `GET /api/metrics/summary` - Dashboard summary metrics
+- `GET /api/metrics/trends` - Brand mention trends over time
+- `GET /api/insights` - AI-generated insights and alerts
+- `GET /api/analytics/brand` - Detailed brand performance data
+- `GET /api/analytics/competitive` - Competitive analysis data
+
+### AI Assistant
+- `POST /api/chat/analyze` - Process AI Assistant queries with real-time data context
+
+### Authentication
+- Handled automatically by Supabase Auth
+- Middleware protects routes and enforces role-based access
+
+## User Roles & Permissions
+
+### Admin Role
+- Full dashboard access
+- User management capabilities
+- Data export (CSV/PDF, including bookmarks)
+- AI Assistant chat access
+- Advanced citation management
+
+### Viewer Role
+- Dashboard and analytics access
+- Data export functionality (including bookmarked citations)
+- AI Assistant chat access
+- Citation bookmark management
+- No user management
+
+## Export Functionality
+
+### CSV Export
+- Multi-sheet Excel files with separate tabs for metrics, trends, platforms, competitors
+- Bookmarked citations export functionality
+- Enhanced data structure with unique mentions and total citations
+- Formatted data tables with clear headers
+- Date-stamped filenames
+
+### PDF Reports
+- Comprehensive reports with charts captured as images
+- Executive summary with key metrics
+- Data tables and visualizations
+- Professional formatting suitable for stakeholder distribution
+
+## Security Features
+
+- **Row Level Security (RLS)** on all tables
+- **Authentication middleware** protecting all routes
+- **Role-based access control** for admin functions
+- **Secure API endpoints** with user verification
+- **Environment variable protection** for sensitive keys
+
+## Data Flow
+
+1. **Data Collection**: Weekly batch updates from automation pipeline
+2. **Data Processing**: Aggregation through database views and API endpoints
+3. **Visualization**: Real-time charts with interactive filtering
+4. **AI Analysis**: Context-aware insights using current data
+5. **Export**: On-demand report generation in multiple formats
+
+## Deployment
+
+### Vercel Deployment (Recommended)
+1. Connect GitHub repository to Vercel
+2. Configure environment variables in Vercel dashboard
+3. Deploy automatically on git push
+
+### Environment Variables in Production
+- All environment variables must be configured in Vercel
+- Supabase URLs and keys from your production project
+- Google Gemini API key for AI functionality
+
+## Monitoring & Maintenance
+
+### Data Freshness
+- Weekly data refresh cycle indicated in UI
+- Last update timestamps throughout the application
+- Automated data quality checks via database constraints
+
+### Performance Optimization
+- Database indexing on frequently queried columns
+- Efficient data aggregation through views
+- Client-side caching of API responses
+- Optimized chart rendering with Recharts
+
+## Support & Troubleshooting
+
+### Common Issues
+1. **Authentication errors**: Check Supabase configuration and RLS policies
+2. **AI chat not working**: Verify Google Gemini API key configuration
+3. **Charts not loading**: Check API endpoints and data format
+4. **Export failures**: Ensure all required dependencies are installed
+
+### Development Tips
+- Use Supabase Studio for database management
+- Monitor API usage in Vercel Analytics
+- Check browser console for client-side errors
+- Use React DevTools for component debugging
+
+## Recent Updates
+
+### Design System Implementation
+- IBM Plex Mono typography for professional headings
+- Brand-consistent color palette with navy blue (#162950) primary
+- Enhanced visual hierarchy with 60/30/10 color distribution
+- Accessible design with high contrast ratios
+
+### Enhanced Analytics Features
+- Unique mentions tracking per prompt
+- Dynamic date range indicators
+- Horizontal bar charts for improved readability
+- Advanced citation management with bookmark functionality
+- Real-time filtering across all visualizations
+
+### AI Assistant Improvements
+- Rebranded from "AI Analyst" to "AI Assistant"
+- Enhanced data integration with real-time Supabase context
+- Strategic recommendation capabilities
+- Improved query suggestions for business insights
+
+## Future Enhancements
+
+- Real-time data streaming
+- Advanced sentiment analysis
+- Automated alerting system
+- Custom dashboard creation
+- Mobile-responsive design optimization
+- Advanced ML predictions
+- Integration with more AI platforms
+- Enhanced bookmark organization and tagging
+
+## License
+
+Proprietary - Internal use only for Anduin team members.
