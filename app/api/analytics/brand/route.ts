@@ -3,6 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
+    // Return mock data directly for demo purposes
+    const { searchParams } = new URL(request.url)
+    const days = parseInt(searchParams.get('days') || '30')
+    const platform = searchParams.get('platform') || 'all'
+    const cluster = searchParams.get('cluster') || 'all'
+    return NextResponse.json(generateMockBrandData(days, platform, cluster))
+
+    /* Original database logic - commented for demo
     const supabase = await createClient()
 
     // Verify authentication
@@ -52,6 +60,7 @@ export async function GET(request: NextRequest) {
     const processedData = processBrandData(mentions || [], days)
 
     return NextResponse.json(processedData)
+    */
   } catch (error) {
     console.error('Error fetching brand analytics:', error)
 
@@ -129,7 +138,7 @@ function processBrandData(mentions: any[], days: number) {
   }
 }
 
-function generateMockBrandData(days: number) {
+function generateMockBrandData(days: number, platform?: string, cluster?: string) {
   const trends = []
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
@@ -140,21 +149,82 @@ function generateMockBrandData(days: number) {
     })
   }
 
+  // Base platform data with mentions and citations breakdown
+  let platformsData = [
+    {
+      name: 'ChatGPT',
+      totalMentions: 45,
+      brandMentions: 28,
+      competitorMentions: 17,
+      citations: 12,
+      brandCitations: 8,
+      competitorCitations: 4
+    },
+    {
+      name: 'Google AI',
+      totalMentions: 38,
+      brandMentions: 24,
+      competitorMentions: 14,
+      citations: 8,
+      brandCitations: 5,
+      competitorCitations: 3
+    },
+    {
+      name: 'Microsoft Copilot',
+      totalMentions: 23,
+      brandMentions: 15,
+      competitorMentions: 8,
+      citations: 5,
+      brandCitations: 3,
+      competitorCitations: 2
+    }
+  ]
+
+  // Base cluster data with mentions breakdown by category
+  let clustersData = [
+    {
+      name: 'Brand Research',
+      totalMentions: 89,
+      brandMentions: 55,
+      competitorMentions: 34
+    },
+    {
+      name: 'Competitive Analysis',
+      totalMentions: 67,
+      brandMentions: 42,
+      competitorMentions: 25
+    },
+    {
+      name: 'Product Comparison',
+      totalMentions: 54,
+      brandMentions: 32,
+      competitorMentions: 22
+    },
+    {
+      name: 'Market Analysis',
+      totalMentions: 37,
+      brandMentions: 23,
+      competitorMentions: 14
+    }
+  ]
+
+  // Platform Distribution and Prompt Clusters charts should only respond to date range filter
+  // Remove platform and cluster filtering for these specific chart datasets
+
   return {
     trends,
-    platforms: [
-      { name: 'ChatGPT', mentions: 45, citations: 12 },
-      { name: 'Google AI', mentions: 38, citations: 8 },
-      { name: 'Microsoft Copilot', mentions: 23, citations: 5 }
-    ],
-    clusters: [
-      { name: 'Brand Research', mentions: 52 },
-      { name: 'Competitive Analysis', mentions: 34 },
-      { name: 'Product Comparison', mentions: 20 }
+    platforms: platformsData,
+    clusters: clustersData,
+    citations: [
+      { url: 'https://techcrunch.com/fintech-comparison', count: 18, title: 'Fintech Solutions Comparison 2024' },
+      { url: 'https://venturebeat.com/investment-platforms', count: 15, title: 'Investment Platform Analysis' },
+      { url: 'https://forbes.com/capital-markets', count: 12, title: 'Capital Markets Technology Review' },
+      { url: 'https://wsj.com/digital-finance', count: 10, title: 'Digital Finance Landscape' },
+      { url: 'https://bloomberg.com/fintech-trends', count: 8, title: 'Fintech Industry Trends' }
     ],
     metrics: {
-      totalMentions: 106,
-      avgCitations: 8.3,
+      uniqueMentions: platformsData.reduce((sum, p) => sum + p.brandMentions, 0),
+      totalCitations: platformsData.reduce((sum, p) => sum + p.brandCitations, 0),
       growthRate: 15.2
     }
   }

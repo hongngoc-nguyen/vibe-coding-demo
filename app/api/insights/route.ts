@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { MOCK_INSIGHTS } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
   try {
+    // Return mock data directly for demo purposes
+    return NextResponse.json({
+      insights: MOCK_INSIGHTS.map(insight => ({
+        ...insight,
+        timestamp: new Date().toISOString()
+      })),
+      lastUpdate: new Date().toISOString(),
+    })
+
+    /* Original database logic - commented for demo
     const supabase = await createClient()
 
     // Verify authentication
@@ -58,25 +69,13 @@ export async function GET(request: NextRequest) {
       insights,
       lastUpdate: new Date().toISOString(),
     })
+    */
   } catch (error) {
     console.error('Error generating insights:', error)
 
-    // Return fallback insights
+    // Return mock insights for demo
     return NextResponse.json({
-      insights: [
-        {
-          type: 'trend',
-          title: 'Weekly Performance',
-          description: 'Brand mention data is being processed',
-          timestamp: new Date().toISOString(),
-        },
-        {
-          type: 'info',
-          title: 'Platform Activity',
-          description: 'Monitoring across ChatGPT, Google AI, and Microsoft Copilot',
-          timestamp: new Date().toISOString(),
-        },
-      ],
+      insights: generateMockInsights(),
       lastUpdate: new Date().toISOString(),
     })
   }
@@ -144,4 +143,35 @@ function generateInsights(data: any) {
   }
 
   return insights.slice(0, 4) // Limit to 4 insights
+}
+
+function generateMockInsights() {
+  const insights = [
+    {
+      type: 'trend',
+      title: 'Mentions Trending Up',
+      description: 'Brand mentions increased 15% this week (45 vs 39)',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      type: 'alert',
+      title: 'Competitor Activity',
+      description: 'Passthrough mentioned 8% more on ChatGPT this week',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      type: 'success',
+      title: 'Citation Growth',
+      description: 'New weekly high: 12 authoritative citations achieved',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      type: 'info',
+      title: 'Platform Performance',
+      description: 'ChatGPT leading with 18 mentions, Google AI showing growth',
+      timestamp: new Date().toISOString(),
+    },
+  ]
+
+  return insights
 }

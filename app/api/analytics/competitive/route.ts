@@ -3,6 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
+    // Return mock data directly for demo purposes
+    const days = parseInt(new URL(request.url).searchParams.get('days') || '30')
+    return NextResponse.json(generateMockCompetitiveData(days))
+
+    /* Original database logic - commented for demo
     const supabase = await createClient()
 
     // Verify authentication
@@ -56,6 +61,7 @@ export async function GET(request: NextRequest) {
     )
 
     return NextResponse.json(processedData)
+    */
   } catch (error) {
     console.error('Error fetching competitive analytics:', error)
 
@@ -135,7 +141,7 @@ function generateMockCompetitiveData(days: number) {
     { name: 'Anduin', mentions: 45, trend: 15.2, marketShare: 35, citations: 12 },
     { name: 'Passthrough', mentions: 38, trend: -5.3, marketShare: 30, citations: 8 },
     { name: 'Subscribe', mentions: 32, trend: 8.7, marketShare: 25, citations: 6 },
-    { name: 'Others', mentions: 13, trend: -2.1, marketShare: 10, citations: 2 }
+    { name: 'CompetitorX', mentions: 13, trend: -2.1, marketShare: 10, citations: 2 }
   ]
 
   const trends = []
@@ -146,12 +152,46 @@ function generateMockCompetitiveData(days: number) {
       Anduin: Math.floor(Math.random() * 8) + 3,
       Passthrough: Math.floor(Math.random() * 6) + 2,
       Subscribe: Math.floor(Math.random() * 5) + 2,
-      Others: Math.floor(Math.random() * 3) + 1
+      CompetitorX: Math.floor(Math.random() * 3) + 1
     })
   }
 
+  const citations = [
+    {
+      url: 'https://techcrunch.com/fintech-comparison',
+      count: 18,
+      title: 'Fintech Solutions Comparison 2024',
+      competitors: ['Anduin', 'Passthrough']
+    },
+    {
+      url: 'https://venturebeat.com/investment-platforms',
+      count: 15,
+      title: 'Investment Platform Analysis',
+      competitors: ['Subscribe', 'Anduin']
+    },
+    {
+      url: 'https://forbes.com/capital-markets',
+      count: 12,
+      title: 'Capital Markets Technology Review',
+      competitors: ['Passthrough', 'CompetitorX']
+    },
+    {
+      url: 'https://wsj.com/digital-finance',
+      count: 10,
+      title: 'Digital Finance Landscape',
+      competitors: ['Anduin', 'Subscribe', 'Passthrough']
+    },
+    {
+      url: 'https://bloomberg.com/fintech-trends',
+      count: 8,
+      title: 'Fintech Industry Trends',
+      competitors: ['CompetitorX', 'Anduin']
+    }
+  ]
+
   return {
     competitors,
-    trends
+    trends,
+    citations
   }
 }

@@ -245,6 +245,7 @@ export function CompetitiveAnalysis() {
                   <SelectItem value="brand-research">Brand Research</SelectItem>
                   <SelectItem value="competitive">Competitive Analysis</SelectItem>
                   <SelectItem value="product">Product Comparison</SelectItem>
+                  <SelectItem value="market">Market Analysis</SelectItem>
                 </SelectContent>
               </Select>
             </div>

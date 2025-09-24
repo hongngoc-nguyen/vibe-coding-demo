@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { generateMetricsSummary } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
   try {
+    // Return mock data directly for demo purposes
+    return NextResponse.json(generateMetricsSummary())
+
+    /* Original database logic - commented for demo
     const supabase = await createClient()
 
     // Verify authentication
@@ -92,11 +97,30 @@ export async function GET(request: NextRequest) {
       rankTrend,
       weeklyGrowth,
     })
+    */
   } catch (error) {
     console.error('Error fetching metrics summary:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch metrics' },
-      { status: 500 }
-    )
+
+    // Return mock data for demo
+    return NextResponse.json(generateMetricsSummary())
+  }
+}
+
+function generateMockMetricsSummary() {
+  // Generate realistic metrics with some variation
+  const baseMentions = 45
+  const variation = 0.8 + Math.random() * 0.4 // ±20% variation
+
+  const totalMentions = Math.round(baseMentions * variation)
+  const citations = Math.round(totalMentions * 0.28) // ~28% citation rate
+
+  return {
+    totalMentions,
+    mentionTrend: 15.2, // 15.2% growth
+    citations,
+    citationTrend: 8.7, // 8.7% growth in citations
+    competitiveRank: 2,
+    rankTrend: -0.5, // Improved by 0.5 positions
+    weeklyGrowth: 15.2,
   }
 }

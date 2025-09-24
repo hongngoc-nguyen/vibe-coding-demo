@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { format, parseISO, eachWeekOfInterval, startOfWeek, endOfWeek } from 'date-fns'
+import { generateCompetitorData } from '@/lib/mock-data'
 
 interface CompetitorData {
   name: string
