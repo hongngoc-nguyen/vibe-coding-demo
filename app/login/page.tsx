@@ -48,6 +48,48 @@ export default function LoginPage() {
     }
   }
 
+  const handleDemoLogin = () => {
+    toast.success('Demo login successful!')
+    router.push('/dashboard/demo')
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Please enter your email address first')
+      return
+    }
+
+    // Check if Supabase is properly configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      toast.error('Password reset is not available in demo mode. Please use the Demo Login button instead.', {
+        duration: 5000,
+        description: 'To enable password reset, configure your Supabase credentials in .env.local'
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/auth/reset-password`,
+      })
+      if (error) throw error
+      toast.success('Password reset email sent! Check your inbox.')
+    } catch (error: any) {
+      if (error.message?.includes('Failed to fetch')) {
+        toast.error('Password reset is not available in demo mode. Please use the Demo Login button instead.', {
+          duration: 5000,
+          description: 'To enable password reset, configure your Supabase credentials in .env.local'
+        })
+      } else {
+        toast.error(error.message || 'Failed to send reset email')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
       <Card className="w-full max-w-md">
@@ -58,7 +100,7 @@ export default function LoginPage() {
           <CardDescription>
             {isSignUp
               ? 'Enter your email below to create your account'
-              : 'Enter your credentials to access your dashboard'}
+              : 'Enter your credentials to access your dashboard, or try the demo'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -92,6 +134,33 @@ export default function LoginPage() {
                 : 'Sign In'}
             </Button>
           </form>
+
+          {!isSignUp && (
+            <div className="mt-4 space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleDemoLogin}
+              >
+                🚀 Demo Login (No Authentication Required)
+              </Button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-blue-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                  title={process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+                    ? 'Not available in demo mode - use Demo Login instead'
+                    : 'Send password reset email'}
+                >
+                  Forgot your password? {process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') && '(Demo mode)'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 text-center text-sm">
             {isSignUp ? (
               <>

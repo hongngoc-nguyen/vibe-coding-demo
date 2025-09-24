@@ -41,7 +41,7 @@ export function BrandTrendChart() {
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-navy"></div>
           </div>
         </CardContent>
       </Card>
@@ -75,7 +75,7 @@ export function BrandTrendChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Brand Mention Trends</CardTitle>
+        <CardTitle className="heading text-brand-navy">Brand Mention Trends</CardTitle>
         <CardDescription>
           Weekly Anduin mentions and citations across AI platforms
         </CardDescription>
@@ -95,17 +95,17 @@ export function BrandTrendChart() {
             <Line
               type="monotone"
               dataKey="mentions"
-              stroke="#3b82f6"
+              stroke="#162950"
               strokeWidth={2}
-              dot={{ fill: '#3b82f6', r: 4 }}
+              dot={{ fill: '#162950', r: 4 }}
               name="Mentions"
             />
             <Line
               type="monotone"
               dataKey="citations"
-              stroke="#10b981"
+              stroke="#60a5fa"
               strokeWidth={2}
-              dot={{ fill: '#10b981', r: 4 }}
+              dot={{ fill: '#60a5fa', r: 4 }}
               name="Citations"
             />
           </LineChart>
