@@ -46,3 +46,4 @@ create-tables.js
 
 # Browser automation
 .playwright-mcp/
+aeo-dashboard/
