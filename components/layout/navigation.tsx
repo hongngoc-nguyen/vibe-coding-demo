@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Home, BarChart3, Users, LogOut, MessageSquare } from 'lucide-react'
+import { Home, BarChart3, Users, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface NavigationProps {
@@ -35,7 +35,6 @@ export function Navigation({ user, userRole }: NavigationProps) {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/chat', label: 'AI Analyst', icon: MessageSquare },
   ]
 
   if (userRole === 'admin') {

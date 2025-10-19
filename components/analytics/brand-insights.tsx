@@ -56,30 +56,15 @@ export function BrandInsights() {
       setData(result)
     } catch (error) {
       console.error('Failed to fetch brand data:', error)
-      // Set mock data for demo
+      // Set empty data structure
       setData({
-        platforms: [
-          { name: 'ChatGPT', totalMentions: 45, brandMentions: 28, competitorMentions: 17, citations: 12, brandCitations: 8, competitorCitations: 4 },
-          { name: 'Google AI', totalMentions: 38, brandMentions: 24, competitorMentions: 14, citations: 8, brandCitations: 5, competitorCitations: 3 },
-          { name: 'Microsoft Copilot', totalMentions: 23, brandMentions: 15, competitorMentions: 8, citations: 5, brandCitations: 3, competitorCitations: 2 }
-        ],
-        clusters: [
-          { name: 'Brand Research', totalMentions: 89, brandMentions: 55, competitorMentions: 34 },
-          { name: 'Competitive Analysis', totalMentions: 67, brandMentions: 42, competitorMentions: 25 },
-          { name: 'Product Comparison', totalMentions: 54, brandMentions: 32, competitorMentions: 22 },
-          { name: 'Market Analysis', totalMentions: 37, brandMentions: 23, competitorMentions: 14 }
-        ],
-        citations: [
-          { url: 'https://techcrunch.com/fintech-comparison', count: 18, title: 'Fintech Solutions Comparison 2024' },
-          { url: 'https://venturebeat.com/investment-platforms', count: 15, title: 'Investment Platform Analysis' },
-          { url: 'https://forbes.com/capital-markets', count: 12, title: 'Capital Markets Technology Review' },
-          { url: 'https://wsj.com/digital-finance', count: 10, title: 'Digital Finance Landscape' },
-          { url: 'https://bloomberg.com/fintech-trends', count: 8, title: 'Fintech Industry Trends' }
-        ],
+        platforms: [],
+        clusters: [],
+        citations: [],
         metrics: {
-          uniqueMentions: 247,
-          totalCitations: 63,
-          growthRate: 15.2
+          uniqueMentions: 0,
+          totalCitations: 0,
+          growthRate: 0
         }
       })
     } finally {
