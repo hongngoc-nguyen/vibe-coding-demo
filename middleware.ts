@@ -1,60 +1,35 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/analytics(.*)',
+  '/admin(.*)',
+])
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
+const isAdminRoute = createRouteMatcher(['/admin(.*)'])
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Protected routes
-  if (
-    !user &&
-    (request.nextUrl.pathname.startsWith('/dashboard') ||
-      request.nextUrl.pathname.startsWith('/analytics') ||
-      request.nextUrl.pathname.startsWith('/admin'))
-  ) {
-    return NextResponse.redirect(new URL('/login', request.url))
+export default clerkMiddleware(async (auth, req) => {
+  // Protect routes that require authentication
+  if (isProtectedRoute(req)) {
+    await auth.protect()
   }
 
-  // Admin only routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user?.id || '')
-      .single()
+  // Additional admin check can be implemented here if needed
+  // You can check user metadata or roles from Clerk
+  if (isAdminRoute(req)) {
+    const { userId, sessionClaims } = await auth()
 
-    if (userData?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Check if user has admin role (you'll need to set this in Clerk dashboard)
+    if (sessionClaims?.metadata?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }
-
-  return supabaseResponse
-}
+})
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
   ],
 }

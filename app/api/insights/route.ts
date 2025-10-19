@@ -1,177 +1,179 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { MOCK_INSIGHTS } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
   try {
-    // Return mock data directly for demo purposes
-    return NextResponse.json({
-      insights: MOCK_INSIGHTS.map(insight => ({
-        ...insight,
-        timestamp: new Date().toISOString()
-      })),
-      lastUpdate: new Date().toISOString(),
-    })
-
-    /* Original database logic - commented for demo
     const supabase = await createClient()
 
-    // Verify authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get latest two response dates for comparison
+    const { data: dates } = await supabase
+      .from('responses')
+      .select('response_date')
+      .order('response_date', { ascending: false })
+      .limit(2)
+
+    if (!dates || dates.length < 2) {
+      return NextResponse.json({
+        insights: [],
+        lastUpdate: new Date().toISOString(),
+      })
     }
 
-    // Get recent data for insights generation
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+    const latestDate = dates[0].response_date
+    const previousDate = dates[1].response_date
 
-    // Get brand mentions for trend analysis
-    const { data: thisWeekMentions } = await supabase
-      .from('brand_mentions')
+    // Get current citations for Anduin
+    const { data: currentCitations } = await supabase
+      .from('citation_listing')
       .select(`
-        id,
-        brand_mentioned,
-        responses!inner(response_date, platform)
+        url,
+        responses:response_id(response_date),
+        entities:entity_id(canonical_name)
       `)
-      .gte('responses.response_date', oneWeekAgo.toISOString())
-      .eq('brand_mentioned', true)
+      .eq('responses.response_date', latestDate)
+      .eq('entities.canonical_name', 'Anduin')
 
-    const { data: lastWeekMentions } = await supabase
-      .from('brand_mentions')
+    // Get previous citations for Anduin
+    const { data: previousCitations } = await supabase
+      .from('citation_listing')
       .select(`
-        id,
-        brand_mentioned,
-        responses!inner(response_date, platform)
+        url,
+        responses:response_id(response_date),
+        entities:entity_id(canonical_name)
       `)
-      .gte('responses.response_date', twoWeeksAgo.toISOString())
-      .lt('responses.response_date', oneWeekAgo.toISOString())
-      .eq('brand_mentioned', true)
+      .eq('responses.response_date', previousDate)
+      .eq('entities.canonical_name', 'Anduin')
 
-    // Get competitor mentions
-    const { data: competitorMentions } = await supabase
-      .from('competitor_mentions')
+    // Get competitor citations for current date
+    const { data: competitorCitations } = await supabase
+      .from('citation_listing')
       .select(`
-        competitor_name,
-        responses!inner(response_date, platform)
+        url,
+        responses:response_id(response_date),
+        entities:entity_id(canonical_name, entity_type)
       `)
-      .gte('responses.response_date', oneWeekAgo.toISOString())
-      .eq('competitors_mentioned', true)
+      .eq('responses.response_date', latestDate)
+      .eq('entities.entity_type', 'competitor')
+
+    // Get citations by cluster for current date
+    const { data: clusterCitations } = await supabase
+      .from('citation_listing')
+      .select(`
+        url,
+        responses:response_id(
+          response_date,
+          prompts:prompt_id(prompt_cluster)
+        ),
+        entities:entity_id(canonical_name)
+      `)
+      .eq('responses.response_date', latestDate)
+      .eq('entities.canonical_name', 'Anduin')
 
     // Generate insights based on data
     const insights = generateInsights({
-      thisWeekMentions: thisWeekMentions || [],
-      lastWeekMentions: lastWeekMentions || [],
-      competitorMentions: competitorMentions || [],
+      currentCitations: currentCitations || [],
+      previousCitations: previousCitations || [],
+      competitorCitations: competitorCitations || [],
+      clusterCitations: clusterCitations || [],
+      latestDate,
+      previousDate,
     })
 
     return NextResponse.json({
       insights,
       lastUpdate: new Date().toISOString(),
     })
-    */
   } catch (error) {
     console.error('Error generating insights:', error)
-
-    // Return mock insights for demo
-    return NextResponse.json({
-      insights: generateMockInsights(),
-      lastUpdate: new Date().toISOString(),
-    })
+    return NextResponse.json({ error: 'Failed to generate insights' }, { status: 500 })
   }
 }
 
 function generateInsights(data: any) {
   const insights = []
-  const currentCount = data.thisWeekMentions.length
-  const previousCount = data.lastWeekMentions.length
+
+  // Count distinct URLs for current and previous periods
+  const currentCount = new Set(data.currentCitations.map((c: any) => c.url)).size
+  const previousCount = new Set(data.previousCitations.map((c: any) => c.url)).size
 
   // Trend insight
   if (currentCount > previousCount) {
     const growth = Math.round(((currentCount - previousCount) / Math.max(previousCount, 1)) * 100)
     insights.push({
       type: 'trend',
-      title: 'Mentions Trending Up',
-      description: `Brand mentions increased ${growth}% this week (${currentCount} vs ${previousCount})`,
+      title: 'Citations Trending Up',
+      description: `Brand citations increased ${growth}% (${currentCount} vs ${previousCount})`,
       timestamp: new Date().toISOString(),
     })
   } else if (currentCount < previousCount) {
     const decline = Math.round(((previousCount - currentCount) / Math.max(previousCount, 1)) * 100)
     insights.push({
       type: 'alert',
-      title: 'Mentions Declining',
-      description: `Brand mentions decreased ${decline}% this week (${currentCount} vs ${previousCount})`,
+      title: 'Citations Declining',
+      description: `Brand citations decreased ${decline}% (${currentCount} vs ${previousCount})`,
       timestamp: new Date().toISOString(),
     })
-  }
-
-  // Competitor activity
-  const competitorCounts = data.competitorMentions.reduce((acc: any, mention: any) => {
-    acc[mention.competitor_name] = (acc[mention.competitor_name] || 0) + 1
-    return acc
-  }, {})
-
-  const topCompetitor = Object.entries(competitorCounts)
-    .sort(([,a], [,b]) => (b as number) - (a as number))[0]
-
-  if (topCompetitor) {
+  } else {
     insights.push({
-      type: 'alert',
-      title: 'Competitor Activity',
-      description: `${topCompetitor[0]} mentioned ${topCompetitor[1]} times this week`,
+      type: 'info',
+      title: 'Citations Stable',
+      description: `Brand citations remained stable at ${currentCount}`,
       timestamp: new Date().toISOString(),
     })
   }
 
-  // Platform performance
-  const platformCounts = data.thisWeekMentions.reduce((acc: any, mention: any) => {
-    const platform = mention.responses.platform
-    acc[platform] = (acc[platform] || 0) + 1
-    return acc
-  }, {})
+  // Competitor activity - count distinct URLs per competitor
+  const competitorCounts: { [key: string]: Set<string> } = {}
+  data.competitorCitations.forEach((citation: any) => {
+    if (!citation.entities) return // Skip if no entity data
+    const competitorName = citation.entities.canonical_name
+    if (!competitorCounts[competitorName]) {
+      competitorCounts[competitorName] = new Set()
+    }
+    competitorCounts[competitorName].add(citation.url)
+  })
 
-  const topPlatform = Object.entries(platformCounts)
-    .sort(([,a], [,b]) => (b as number) - (a as number))[0]
+  const competitorSizes = Object.entries(competitorCounts).map(([name, urls]) => ({
+    name,
+    count: urls.size
+  }))
+  const topCompetitor = competitorSizes.sort((a, b) => b.count - a.count)[0]
 
-  if (topPlatform) {
+  if (topCompetitor && topCompetitor.count > 0) {
+    const comparison = topCompetitor.count > currentCount ? 'ahead of' : 'behind'
+    insights.push({
+      type: topCompetitor.count > currentCount ? 'alert' : 'success',
+      title: 'Top Competitor',
+      description: `${topCompetitor.name} has ${topCompetitor.count} citations, ${comparison} Anduin`,
+      timestamp: new Date().toISOString(),
+    })
+  }
+
+  // Cluster performance - count distinct URLs per cluster
+  const clusterCounts: { [key: string]: Set<string> } = {}
+  data.clusterCitations.forEach((citation: any) => {
+    if (!citation.responses) return // Skip if no response data
+    const cluster = citation.responses.prompts?.prompt_cluster || 'Unclustered'
+    if (!clusterCounts[cluster]) {
+      clusterCounts[cluster] = new Set()
+    }
+    clusterCounts[cluster].add(citation.url)
+  })
+
+  const clusterSizes = Object.entries(clusterCounts).map(([name, urls]) => ({
+    name,
+    count: urls.size
+  }))
+  const topCluster = clusterSizes.sort((a, b) => b.count - a.count)[0]
+
+  if (topCluster && topCluster.count > 0) {
     insights.push({
       type: 'success',
-      title: 'Platform Performance',
-      description: `${topPlatform[0]} leading with ${topPlatform[1]} mentions`,
+      title: 'Top Performing Cluster',
+      description: `"${topCluster.name}" cluster leading with ${topCluster.count} citations`,
       timestamp: new Date().toISOString(),
     })
   }
 
   return insights.slice(0, 4) // Limit to 4 insights
-}
-
-function generateMockInsights() {
-  const insights = [
-    {
-      type: 'trend',
-      title: 'Mentions Trending Up',
-      description: 'Brand mentions increased 15% this week (45 vs 39)',
-      timestamp: new Date().toISOString(),
-    },
-    {
-      type: 'alert',
-      title: 'Competitor Activity',
-      description: 'Passthrough mentioned 8% more on ChatGPT this week',
-      timestamp: new Date().toISOString(),
-    },
-    {
-      type: 'success',
-      title: 'Citation Growth',
-      description: 'New weekly high: 12 authoritative citations achieved',
-      timestamp: new Date().toISOString(),
-    },
-    {
-      type: 'info',
-      title: 'Platform Performance',
-      description: 'ChatGPT leading with 18 mentions, Google AI showing growth',
-      timestamp: new Date().toISOString(),
-    },
-  ]
-
-  return insights
 }

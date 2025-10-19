@@ -1,46 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateTrendData } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
   try {
-    // Return mock data directly for demo purposes
-    const { searchParams } = new URL(request.url)
-    const weeksBack = parseInt(searchParams.get('weeks') || '12')
+    const supabase = await createClient()
 
-    return NextResponse.json(generateTrendData(weeksBack))
+    // Get brand citations grouped by response_date
+    const { data, error } = await supabase
+      .from('citation_listing')
+      .select(`
+        url,
+        responses:response_id(response_date),
+        entities:entity_id(canonical_name)
+      `)
+      .eq('entities.canonical_name', 'Anduin')
+
+    if (error) {
+      console.error('Error fetching trend data:', error)
+      return NextResponse.json({ error: 'Failed to fetch trend data' }, { status: 500 })
+    }
+
+    // Group by date only (not datetime) and count distinct URLs
+    const citationsByDate = new Map<string, Set<string>>()
+
+    data?.forEach(item => {
+      if (!item.responses) return // Skip if no response data
+      // Extract just the date part (YYYY-MM-DD)
+      const dateOnly = item.responses.response_date.split('T')[0]
+      if (!citationsByDate.has(dateOnly)) {
+        citationsByDate.set(dateOnly, new Set())
+      }
+      citationsByDate.get(dateOnly)!.add(item.url)
+    })
+
+    // Transform to array format and sort by date
+    const trendData = Array.from(citationsByDate.entries())
+      .map(([date, urls]) => ({
+        date,
+        citations: urls.size,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    return NextResponse.json(trendData)
   } catch (error) {
     console.error('Error fetching trend data:', error)
-    return NextResponse.json(generateTrendData(12))
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
-
-function generateMockTrendData(weeks: number) {
-  const data = []
-  const now = new Date()
-
-  // Generate realistic trend data for Anduin with seasonal patterns
-  const baseMentions = 22
-  const baseCitations = 8
-
-  for (let i = weeks - 1; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000)
-    const weekStart = new Date(date.setDate(date.getDate() - date.getDay()))
-
-    // Add slight upward trend with some variation
-    const trendMultiplier = 1 + (weeks - i) * 0.02 // 2% growth per week
-    const variation = 0.8 + Math.random() * 0.4 // ±20% variation
-
-    const mentions = Math.round(baseMentions * trendMultiplier * variation)
-    const citations = Math.round(baseCitations * trendMultiplier * variation)
-
-    data.push({
-      week: weekStart.toISOString(),
-      mentions: Math.max(mentions, 5), // Minimum 5 mentions
-      citations: Math.max(citations, 2), // Minimum 2 citations
-      platform: 'All Platforms',
-    })
-  }
-
-  return data
 }

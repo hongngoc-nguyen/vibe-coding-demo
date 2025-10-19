@@ -3,16 +3,13 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, Eye, Award, Link2 } from 'lucide-react'
+import { TrendingUp, TrendingDown, Link2 } from 'lucide-react'
 
 interface MetricsData {
-  totalMentions: number
-  mentionTrend: number
-  citations: number
-  citationTrend: number
-  competitiveRank: number
-  rankTrend: number
-  weeklyGrowth: number
+  totalCitations: number
+  growthRate: number
+  latestDate?: string
+  previousDate?: string
 }
 
 export function DashboardMetrics() {
@@ -29,13 +26,8 @@ export function DashboardMetrics() {
         console.error('Failed to fetch metrics:', error)
         // Set fallback mock data
         setMetrics({
-          totalMentions: 45,
-          mentionTrend: 15.2,
-          citations: 12,
-          citationTrend: 8.7,
-          competitiveRank: 2,
-          rankTrend: -0.5,
-          weeklyGrowth: 15.2
+          totalCitations: 0,
+          growthRate: 0,
         })
       } finally {
         setIsLoading(false)
@@ -47,8 +39,8 @@ export function DashboardMetrics() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Array.from({ length: 2 }).map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -65,30 +57,14 @@ export function DashboardMetrics() {
 
   const metricCards = [
     {
-      title: 'Total Mentions',
-      value: metrics?.totalMentions || 0,
-      trend: metrics?.mentionTrend || 0,
-      icon: Eye,
-      format: 'number',
-    },
-    {
-      title: 'Brand Citations',
-      value: metrics?.citations || 0,
-      trend: metrics?.citationTrend || 0,
+      title: 'Total Citations',
+      value: metrics?.totalCitations || 0,
       icon: Link2,
       format: 'number',
     },
     {
-      title: 'Competitive Rank',
-      value: metrics?.competitiveRank || 0,
-      trend: metrics?.rankTrend || 0,
-      icon: Award,
-      format: 'rank',
-    },
-    {
-      title: 'Weekly Growth',
-      value: metrics?.weeklyGrowth || 0,
-      trend: metrics?.weeklyGrowth || 0,
+      title: 'Growth Rate',
+      value: metrics?.growthRate || 0,
       icon: TrendingUp,
       format: 'percentage',
     },
@@ -98,31 +74,15 @@ export function DashboardMetrics() {
     switch (format) {
       case 'percentage':
         return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`
-      case 'rank':
-        return `#${value}`
       default:
         return value.toLocaleString()
     }
   }
 
-  const getTrendColor = (trend: number, isRank = false) => {
-    if (trend === 0) return 'text-gray-500'
-    const isPositive = isRank ? trend < 0 : trend > 0
-    return isPositive ? 'text-green-600' : 'text-red-600'
-  }
-
-  const getTrendIcon = (trend: number, isRank = false) => {
-    if (trend === 0) return null
-    const isPositive = isRank ? trend < 0 : trend > 0
-    return isPositive ? TrendingUp : TrendingDown
-  }
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {metricCards.map((metric, index) => {
         const Icon = metric.icon
-        const TrendIcon = getTrendIcon(metric.trend, metric.format === 'rank')
-        const trendColor = getTrendColor(metric.trend, metric.format === 'rank')
 
         return (
           <Card key={index} className="relative overflow-hidden">
@@ -136,18 +96,6 @@ export function DashboardMetrics() {
               <div className="text-2xl font-bold text-gray-900">
                 {formatValue(metric.value, metric.format)}
               </div>
-              {metric.trend !== 0 && (
-                <div className={`flex items-center space-x-1 text-xs ${trendColor}`}>
-                  {TrendIcon && <TrendIcon className="h-3 w-3" />}
-                  <span>
-                    {metric.format === 'rank' ? '' : metric.trend > 0 ? '+' : ''}
-                    {metric.format === 'percentage' ?
-                      `${metric.trend.toFixed(1)}%` :
-                      metric.trend.toFixed(1)
-                    } vs last week
-                  </span>
-                </div>
-              )}
             </CardContent>
           </Card>
         )

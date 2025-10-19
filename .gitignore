@@ -47,3 +47,6 @@ create-tables.js
 # Browser automation
 .playwright-mcp/
 aeo-dashboard/
+
+# clerk configuration (can include secrets)
+/.clerk/

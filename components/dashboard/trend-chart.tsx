@@ -6,10 +6,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, parseISO } from 'date-fns'
 
 interface TrendData {
-  week: string
-  mentions: number
+  date: string
   citations: number
-  platform: string
 }
 
 export function BrandTrendChart() {
@@ -21,7 +19,14 @@ export function BrandTrendChart() {
       try {
         const response = await fetch('/api/metrics/trends')
         const result = await response.json()
-        setData(result)
+
+        // Check if result is an array
+        if (Array.isArray(result)) {
+          setData(result)
+        } else {
+          console.error('API returned non-array data:', result)
+          setData(generateFallbackTrendData())
+        }
       } catch (error) {
         console.error('Failed to fetch trend data:', error)
         // Set fallback mock data
@@ -38,8 +43,8 @@ export function BrandTrendChart() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Brand Mention Trends</CardTitle>
-          <CardDescription>Weekly performance across platforms</CardDescription>
+          <CardTitle>Total Brand Citations</CardTitle>
+          <CardDescription>Anduin citations over time</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
@@ -65,7 +70,7 @@ export function BrandTrendChart() {
           <p className="font-medium">{formatXAxisLabel(label)}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }}>
-              {entry.dataKey === 'mentions' ? 'Mentions' : 'Citations'}: {entry.value}
+              Citations: {entry.value}
             </p>
           ))}
         </div>
@@ -77,9 +82,9 @@ export function BrandTrendChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="heading text-brand-navy">Brand Mention Trends</CardTitle>
+        <CardTitle className="text-brand-navy">Total Brand Citations</CardTitle>
         <CardDescription>
-          Weekly Anduin mentions and citations across AI platforms
+          Anduin citations over time
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -87,27 +92,18 @@ export function BrandTrendChart() {
           <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis
-              dataKey="week"
+              dataKey="date"
               tickFormatter={formatXAxisLabel}
               className="text-xs"
             />
             <YAxis className="text-xs" />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="mentions"
-              stroke="#162950"
-              strokeWidth={2}
-              dot={{ fill: '#162950', r: 4 }}
-              name="Mentions"
-            />
             <Line
               type="monotone"
               dataKey="citations"
-              stroke="#60a5fa"
+              stroke="#162950"
               strokeWidth={2}
-              dot={{ fill: '#60a5fa', r: 4 }}
+              dot={{ fill: '#162950', r: 4 }}
               name="Citations"
             />
           </LineChart>
@@ -121,14 +117,12 @@ function generateFallbackTrendData(): TrendData[] {
   const data: TrendData[] = []
   const now = new Date()
 
-  // Generate 12 weeks of data
+  // Generate 12 dates of data
   for (let i = 11; i >= 0; i--) {
     const date = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000)
     data.push({
-      week: date.toISOString(),
-      mentions: Math.floor(Math.random() * 15) + 15, // 15-30 mentions
-      citations: Math.floor(Math.random() * 8) + 5,   // 5-13 citations
-      platform: 'All Platforms'
+      date: date.toISOString().split('T')[0],
+      citations: Math.floor(Math.random() * 15) + 5, // 5-20 citations
     })
   }
 

@@ -2,83 +2,72 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { format, parseISO } from 'date-fns'
 
-interface CompetitiveData {
+interface ClusterData {
   date: string
-  [entity: string]: string | number
+  [cluster: string]: string | number
 }
 
-const ENTITY_COLORS = [
-  '#162950', // brand-navy (Anduin)
-  '#2563eb', // blue-600
+const CLUSTER_COLORS = [
+  '#162950', // brand-navy
   '#60a5fa', // blue-400
   '#34d399', // emerald-400
   '#fbbf24', // amber-400
   '#f87171', // red-400
   '#a78bfa', // violet-400
   '#fb923c', // orange-400
+  '#2dd4bf', // teal-400
 ]
 
-export function CompetitorComparison() {
-  const [data, setData] = useState<CompetitiveData[]>([])
-  const [entities, setEntities] = useState<string[]>([])
+export function ClusterChart() {
+  const [data, setData] = useState<ClusterData[]>([])
+  const [clusters, setClusters] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchCompetitorData = async () => {
+    const fetchClusterData = async () => {
       try {
-        const response = await fetch('/api/metrics/competitive')
+        const response = await fetch('/api/metrics/clusters')
         const result = await response.json()
 
         if (Array.isArray(result) && result.length > 0) {
           setData(result)
 
-          // Extract all unique entity names from the data, ensuring Anduin is first
-          const entitySet = new Set<string>()
+          // Extract all unique cluster names from the data
+          const clusterSet = new Set<string>()
           result.forEach(item => {
             Object.keys(item).forEach(key => {
               if (key !== 'date') {
-                entitySet.add(key)
+                clusterSet.add(key)
               }
             })
           })
-
-          const entityList = Array.from(entitySet)
-          // Sort so Anduin is first, then alphabetically
-          entityList.sort((a, b) => {
-            if (a === 'Anduin') return -1
-            if (b === 'Anduin') return 1
-            return a.localeCompare(b)
-          })
-          setEntities(entityList)
+          setClusters(Array.from(clusterSet))
         } else {
           console.error('API returned non-array or empty data:', result)
-          const fallbackData = generateFallbackCompetitiveData()
-          setData(fallbackData)
-          setEntities(['Anduin', 'Competitor A', 'Competitor B'])
+          setData(generateFallbackClusterData())
+          setClusters(['Cluster A', 'Cluster B', 'Cluster C'])
         }
       } catch (error) {
-        console.error('Failed to fetch competitor data:', error)
-        const fallbackData = generateFallbackCompetitiveData()
-        setData(fallbackData)
-        setEntities(['Anduin', 'Competitor A', 'Competitor B'])
+        console.error('Failed to fetch cluster data:', error)
+        setData(generateFallbackClusterData())
+        setClusters(['Cluster A', 'Cluster B', 'Cluster C'])
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchCompetitorData()
+    fetchClusterData()
   }, [])
-
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Brand vs. Competitors</CardTitle>
-          <CardDescription>Citation comparison over time</CardDescription>
+          <CardTitle>Citations by Prompt Clusters</CardTitle>
+          <CardDescription>Brand citations grouped by prompt type</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
@@ -99,14 +88,18 @@ export function CompetitorComparison() {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0)
       return (
         <div className="bg-white p-3 border rounded shadow-lg">
           <p className="font-medium mb-2">{formatXAxisLabel(label)}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.reverse().map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {entry.value} citations
+              {entry.name}: {entry.value}
             </p>
           ))}
+          <p className="font-medium text-sm mt-2 pt-2 border-t">
+            Total: {total}
+          </p>
         </div>
       )
     }
@@ -116,14 +109,14 @@ export function CompetitorComparison() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-brand-navy">Brand vs. Competitors</CardTitle>
+        <CardTitle className="text-brand-navy">Citations by Prompt Clusters</CardTitle>
         <CardDescription>
-          Citation comparison over time
+          Distribution of Anduin citations across prompt types
         </CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis
               dataKey="date"
@@ -133,26 +126,27 @@ export function CompetitorComparison() {
             <YAxis className="text-xs" />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            {entities.map((entity, index) => (
-              <Line
-                key={entity}
+            {clusters.map((cluster, index) => (
+              <Area
+                key={cluster}
                 type="monotone"
-                dataKey={entity}
-                stroke={ENTITY_COLORS[index % ENTITY_COLORS.length]}
-                strokeWidth={entity === 'Anduin' ? 3 : 2}
-                dot={{ fill: ENTITY_COLORS[index % ENTITY_COLORS.length], r: entity === 'Anduin' ? 5 : 4 }}
-                name={entity}
+                dataKey={cluster}
+                stackId="1"
+                stroke={CLUSTER_COLORS[index % CLUSTER_COLORS.length]}
+                fill={CLUSTER_COLORS[index % CLUSTER_COLORS.length]}
+                fillOpacity={0.6}
+                name={cluster}
               />
             ))}
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
   )
 }
 
-function generateFallbackCompetitiveData(): CompetitiveData[] {
-  const data: CompetitiveData[] = []
+function generateFallbackClusterData(): ClusterData[] {
+  const data: ClusterData[] = []
   const now = new Date()
 
   // Generate 12 dates of data
@@ -160,9 +154,9 @@ function generateFallbackCompetitiveData(): CompetitiveData[] {
     const date = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000)
     data.push({
       date: date.toISOString().split('T')[0],
-      'Anduin': Math.floor(Math.random() * 15) + 10,
-      'Competitor A': Math.floor(Math.random() * 10) + 5,
-      'Competitor B': Math.floor(Math.random() * 8) + 3,
+      'Cluster A': Math.floor(Math.random() * 8) + 2,
+      'Cluster B': Math.floor(Math.random() * 6) + 1,
+      'Cluster C': Math.floor(Math.random() * 5) + 1,
     })
   }
 

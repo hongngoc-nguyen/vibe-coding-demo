@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useClerk } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -24,11 +24,11 @@ interface NavigationProps {
 export function Navigation({ user, userRole }: NavigationProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
+  const { signOut } = useClerk()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
+    await signOut()
+    router.push('/sign-in')
     toast.success('Signed out successfully')
   }
 

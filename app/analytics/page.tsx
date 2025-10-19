@@ -1,23 +1,26 @@
-import { createClient } from '@/lib/supabase/server'
+import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { Navigation } from '@/components/layout/navigation'
 import { AnalyticsTabs } from '@/components/analytics/analytics-tabs'
 
 export default async function AnalyticsPage() {
-  const supabase = await createClient()
+  const user = await currentUser()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) {
+    redirect('/sign-in')
+  }
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  // Get user role from Clerk metadata
+  const userRole = user.publicMetadata?.role as string || 'viewer'
+
+  const userData = {
+    id: user.id,
+    email: user.emailAddresses[0]?.emailAddress || ''
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation user={user} userRole={userData?.role || 'viewer'} />
+      <Navigation user={userData} userRole={userRole} />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>

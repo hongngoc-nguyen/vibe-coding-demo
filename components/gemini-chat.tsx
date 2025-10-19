@@ -49,7 +49,7 @@ export function GeminiChat() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 heading text-brand-navy">
+        <CardTitle className="flex items-center gap-2 text-brand-navy">
           <Sparkles className="h-5 w-5 text-brand-navy" />
           AI Assistant
         </CardTitle>

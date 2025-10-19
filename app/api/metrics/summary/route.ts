@@ -1,126 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateMetricsSummary } from '@/lib/mock-data'
 
 export async function GET(request: NextRequest) {
   try {
-    // Return mock data directly for demo purposes
-    return NextResponse.json(generateMetricsSummary())
-
-    /* Original database logic - commented for demo
     const supabase = await createClient()
 
-    // Verify authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get all distinct response dates to find latest and previous
+    const { data: dates } = await supabase
+      .from('responses')
+      .select('response_date')
+      .order('response_date', { ascending: false })
+      .limit(2)
+
+    if (!dates || dates.length < 2) {
+      return NextResponse.json({
+        totalCitations: 0,
+        growthRate: 0,
+      })
     }
 
-    // Get current week and previous week dates
-    const now = new Date()
-    const currentWeekStart = new Date(now.setDate(now.getDate() - now.getDay()))
-    const previousWeekStart = new Date(currentWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const latestDate = dates[0].response_date
+    const previousDate = dates[1].response_date
 
-    // Get total mentions this week
-    const { data: currentMentions } = await supabase
-      .from('brand_mentions')
-      .select(`
-        id,
-        brand_mentioned,
-        mention_count,
-        responses!inner(response_date)
-      `)
-      .gte('responses.response_date', currentWeekStart.toISOString())
-      .eq('brand_mentioned', true)
-
-    // Get total mentions previous week
-    const { data: previousMentions } = await supabase
-      .from('brand_mentions')
-      .select(`
-        id,
-        brand_mentioned,
-        mention_count,
-        responses!inner(response_date)
-      `)
-      .gte('responses.response_date', previousWeekStart.toISOString())
-      .lt('responses.response_date', currentWeekStart.toISOString())
-      .eq('brand_mentioned', true)
-
-    // Get citations this week
+    // Get current period citations for Anduin
     const { data: currentCitations } = await supabase
-      .from('brand_mentions')
+      .from('citation_listing')
       .select(`
-        id,
-        brand_citation,
-        responses!inner(response_date)
+        url,
+        responses:response_id(response_date),
+        entities:entity_id(canonical_name)
       `)
-      .gte('responses.response_date', currentWeekStart.toISOString())
-      .eq('brand_citation', true)
+      .eq('responses.response_date', latestDate)
+      .eq('entities.canonical_name', 'Anduin')
 
-    // Get citations previous week
+    // Get previous period citations for Anduin
     const { data: previousCitations } = await supabase
-      .from('brand_mentions')
+      .from('citation_listing')
       .select(`
-        id,
-        brand_citation,
-        responses!inner(response_date)
+        url,
+        responses:response_id(response_date),
+        entities:entity_id(canonical_name)
       `)
-      .gte('responses.response_date', previousWeekStart.toISOString())
-      .lt('responses.response_date', currentWeekStart.toISOString())
-      .eq('brand_citation', true)
+      .eq('responses.response_date', previousDate)
+      .eq('entities.canonical_name', 'Anduin')
 
-    // Calculate metrics
-    const totalMentions = currentMentions?.length || 0
-    const previousTotalMentions = previousMentions?.length || 0
-    const mentionTrend = previousTotalMentions > 0
-      ? ((totalMentions - previousTotalMentions) / previousTotalMentions) * 100
+    // Count distinct URLs
+    const currentCount = new Set(currentCitations?.map(c => c.url) || []).size
+    const previousCount = new Set(previousCitations?.map(c => c.url) || []).size
+
+    // Calculate growth rate
+    const growthRate = previousCount > 0
+      ? ((currentCount - previousCount) / previousCount) * 100
       : 0
-
-    const citations = currentCitations?.length || 0
-    const previousCitationsCount = previousCitations?.length || 0
-    const citationTrend = previousCitationsCount > 0
-      ? ((citations - previousCitationsCount) / previousCitationsCount) * 100
-      : 0
-
-    // Mock competitive ranking (in real implementation, this would compare with competitors)
-    const competitiveRank = 2
-    const rankTrend = -0.5 // Improved by 0.5 positions
-
-    const weeklyGrowth = mentionTrend
 
     return NextResponse.json({
-      totalMentions,
-      mentionTrend,
-      citations,
-      citationTrend,
-      competitiveRank,
-      rankTrend,
-      weeklyGrowth,
+      totalCitations: currentCount,
+      growthRate: Math.round(growthRate * 10) / 10, // Round to 1 decimal
+      latestDate,
+      previousDate,
     })
-    */
   } catch (error) {
     console.error('Error fetching metrics summary:', error)
-
-    // Return mock data for demo
-    return NextResponse.json(generateMetricsSummary())
-  }
-}
-
-function generateMockMetricsSummary() {
-  // Generate realistic metrics with some variation
-  const baseMentions = 45
-  const variation = 0.8 + Math.random() * 0.4 // ±20% variation
-
-  const totalMentions = Math.round(baseMentions * variation)
-  const citations = Math.round(totalMentions * 0.28) // ~28% citation rate
-
-  return {
-    totalMentions,
-    mentionTrend: 15.2, // 15.2% growth
-    citations,
-    citationTrend: 8.7, // 8.7% growth in citations
-    competitiveRank: 2,
-    rankTrend: -0.5, // Improved by 0.5 positions
-    weeklyGrowth: 15.2,
+    return NextResponse.json({ error: 'Failed to fetch metrics summary' }, { status: 500 })
   }
 }
