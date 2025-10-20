@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-export function CompetitiveAnalysis() {
+export function AdditionalMentions() {
   const [citationDateFilter, setCitationDateFilter] = useState('all')
   const [citationPlatformFilter, setCitationPlatformFilter] = useState('all')
   const [data, setData] = useState<any>({
@@ -17,10 +17,10 @@ export function CompetitiveAnalysis() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetchCompetitiveData()
+    fetchAdditionalData()
   }, [citationDateFilter, citationPlatformFilter])
 
-  const fetchCompetitiveData = async () => {
+  const fetchAdditionalData = async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
@@ -28,11 +28,11 @@ export function CompetitiveAnalysis() {
         platform: citationPlatformFilter
       })
 
-      const response = await fetch(`/api/analytics/competitors?${params}`)
+      const response = await fetch(`/api/analytics/additional?${params}`)
       const result = await response.json()
       setData(result)
     } catch (error) {
-      console.error('Failed to fetch competitor data:', error)
+      console.error('Failed to fetch additional mentions data:', error)
       setData({
         citations: [],
         availableDates: [],
@@ -59,8 +59,8 @@ export function CompetitiveAnalysis() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Competitor Citation Sources</CardTitle>
-        <CardDescription>All competitor citations with counts and filters</CardDescription>
+        <CardTitle>Additional Mentions Citation Sources</CardTitle>
+        <CardDescription>All additional mentions citations with counts and filters</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,7 +97,7 @@ export function CompetitiveAnalysis() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[100px]">Count</TableHead>
-              <TableHead className="w-[200px]">Competitor</TableHead>
+              <TableHead className="w-[200px]">Entity</TableHead>
               <TableHead>URL</TableHead>
             </TableRow>
           </TableHeader>

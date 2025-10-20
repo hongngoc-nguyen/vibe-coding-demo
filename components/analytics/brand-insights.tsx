@@ -6,49 +6,44 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts'
 import { Download, Filter, Calendar, FileText, ExternalLink } from 'lucide-react'
 import { exportToCSV, exportToPDF } from '@/lib/export-utils'
 import { toast } from 'sonner'
 
-interface FilterState {
-  dateRange: string
-  platform: string
-  promptCluster: string
-}
-
 export function BrandInsights() {
-  const [filters, setFilters] = useState<FilterState>({
-    dateRange: '30',
-    platform: 'all',
-    promptCluster: 'all'
-  })
+  const [dateRange, setDateRange] = useState('30')
+  const [citationDateFilter, setCitationDateFilter] = useState('all')
+  const [citationPlatformFilter, setCitationPlatformFilter] = useState('all')
   const [data, setData] = useState<any>({
-    trends: [],
-    platforms: [],
-    clusters: [],
+    metrics: { totalCitations: 0, growthRate: 0 },
+    uniqueCitationChart: [],
+    platformDistribution: [],
+    promptClusters: [],
     citations: [],
-    metrics: {}
+    availableDates: [],
+    availablePlatforms: []
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
 
   // Chart refs for PDF export
+  const uniqueCitationChartRef = useRef<HTMLDivElement>(null)
   const platformChartRef = useRef<HTMLDivElement>(null)
   const clusterChartRef = useRef<HTMLDivElement>(null)
   const citationsTableRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchBrandData()
-  }, [filters])
+  }, [dateRange, citationDateFilter, citationPlatformFilter])
 
   const fetchBrandData = async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
-        days: filters.dateRange,
-        platform: filters.platform,
-        cluster: filters.promptCluster
+        days: dateRange,
+        date: citationDateFilter,
+        platform: citationPlatformFilter
       })
 
       const response = await fetch(`/api/analytics/brand?${params}`)
@@ -56,16 +51,14 @@ export function BrandInsights() {
       setData(result)
     } catch (error) {
       console.error('Failed to fetch brand data:', error)
-      // Set empty data structure
       setData({
-        platforms: [],
-        clusters: [],
+        metrics: { totalCitations: 0, growthRate: 0 },
+        uniqueCitationChart: [],
+        platformDistribution: [],
+        promptClusters: [],
         citations: [],
-        metrics: {
-          uniqueMentions: 0,
-          totalCitations: 0,
-          growthRate: 0
-        }
+        availableDates: [],
+        availablePlatforms: []
       })
     } finally {
       setIsLoading(false)
@@ -73,7 +66,7 @@ export function BrandInsights() {
   }
 
   const getDateRangeText = () => {
-    const days = parseInt(filters.dateRange)
+    const days = parseInt(dateRange)
     if (days === 7) return 'vs last 7 days'
     if (days === 30) return 'vs last 30 days'
     if (days === 90) return 'vs last 90 days'
@@ -134,94 +127,8 @@ export function BrandInsights() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date Range</label>
-              <Select value={filters.dateRange} onValueChange={(value) => setFilters({...filters, dateRange: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Platform</label>
-              <Select value={filters.platform} onValueChange={(value) => setFilters({...filters, platform: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Platforms</SelectItem>
-                  <SelectItem value="chatgpt">ChatGPT</SelectItem>
-                  <SelectItem value="google-ai">Google AI</SelectItem>
-                  <SelectItem value="copilot">Microsoft Copilot</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Prompt Cluster</label>
-              <Select value={filters.promptCluster} onValueChange={(value) => setFilters({...filters, promptCluster: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Clusters</SelectItem>
-                  <SelectItem value="brand-research">Brand Research</SelectItem>
-                  <SelectItem value="competitive">Competitive Analysis</SelectItem>
-                  <SelectItem value="product">Product Comparison</SelectItem>
-                  <SelectItem value="market">Market Analysis</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button
-                onClick={handleExportCSV}
-                className="flex-1"
-                disabled={isExporting}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button
-                onClick={handleExportPDF}
-                variant="outline"
-                className="flex-1"
-                disabled={isExporting}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Export PDF
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Unique Mentions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.metrics.uniqueMentions}</div>
-            <Badge variant="default" className="mt-1">
-              +{data.metrics.growthRate}% {getDateRangeText()}
-            </Badge>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Citations</CardTitle>
@@ -229,7 +136,7 @@ export function BrandInsights() {
           <CardContent>
             <div className="text-2xl font-bold">{data.metrics.totalCitations}</div>
             <Badge variant="secondary" className="mt-1">
-              {getDateRangeText().replace('vs ', 'in ')}
+              Last {dateRange} days
             </Badge>
           </CardContent>
         </Card>
@@ -247,25 +154,55 @@ export function BrandInsights() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
+        {/* Unique Citation Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Unique Brand Citations</CardTitle>
+            <CardDescription>Responses containing brand citations vs total responses over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div ref={uniqueCitationChartRef}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.uniqueCitationChart}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="date" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="brandCitations" stackId="a" fill="#162950" name="With Brand Citations" />
+                  <Bar dataKey="totalResponses" stackId="a" fill="#94a3b8" name="Without Brand Citations" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Platform Distribution */}
         <Card>
           <CardHeader>
             <CardTitle>Platform Distribution</CardTitle>
-            <CardDescription className="text-sm">Brand vs Competitor mentions across AI platforms</CardDescription>
+            <CardDescription>Brand citations breakdown by platform over time</CardDescription>
           </CardHeader>
           <CardContent>
             <div ref={platformChartRef}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.platforms}>
+                <LineChart data={data.platformDistribution}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="name" className="text-xs" />
+                  <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="brandMentions" stackId="a" fill="#162950" name="Brand Mentions" />
-                  <Bar dataKey="competitorMentions" stackId="a" fill="#94a3b8" name="Competitor Mentions" />
-                </BarChart>
+                  {data.availablePlatforms.map((platform: string, idx: number) => (
+                    <Line
+                      key={platform}
+                      type="monotone"
+                      dataKey={platform}
+                      stroke={['#162950', '#3b82f6', '#10b981', '#f59e0b'][idx % 4]}
+                      name={platform}
+                    />
+                  ))}
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -275,32 +212,19 @@ export function BrandInsights() {
         <Card>
           <CardHeader>
             <CardTitle>Prompt Clusters</CardTitle>
-            <CardDescription className="text-sm">Brand vs Competitor mentions by prompt category</CardDescription>
+            <CardDescription>Brand citations vs total responses grouped by prompt cluster</CardDescription>
           </CardHeader>
           <CardContent>
             <div ref={clusterChartRef}>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.clusters} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <BarChart data={data.promptClusters}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis
-                    dataKey="name"
-                    tick={false}
-                    axisLine={false}
-                  />
+                  <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip
-                    formatter={(value, name, props) => [
-                      value,
-                      name,
-                      props.payload.name
-                    ]}
-                    labelFormatter={(label, payload) => {
-                      return payload?.[0]?.payload?.name || label
-                    }}
-                  />
+                  <Tooltip />
                   <Legend />
-                  <Bar dataKey="brandMentions" stackId="a" fill="#162950" name="Brand Mentions" />
-                  <Bar dataKey="competitorMentions" stackId="a" fill="#94a3b8" name="Competitor Mentions" />
+                  <Bar dataKey="Unclustered_brand" stackId="a" fill="#162950" name="Unclustered (Brand)" />
+                  <Bar dataKey="Unclustered_total" stackId="a" fill="#94a3b8" name="Unclustered (Total)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -308,45 +232,65 @@ export function BrandInsights() {
         </Card>
 
         {/* Citations Table */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Citation Sources</CardTitle>
-            <CardDescription>All citations with URLs and citation counts</CardDescription>
+            <CardDescription>All brand citations with counts and filters</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Filter by Date</label>
+                <Select value={citationDateFilter} onValueChange={setCitationDateFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    {data.availableDates.map((date: string) => (
+                      <SelectItem key={date} value={date}>{date}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Filter by Platform</label>
+                <Select value={citationPlatformFilter} onValueChange={setCitationPlatformFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Platforms</SelectItem>
+                    {data.availablePlatforms.map((platform: string) => (
+                      <SelectItem key={platform} value={platform}>{platform}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div ref={citationsTableRef}>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[100px]">Count</TableHead>
-                    <TableHead>Title</TableHead>
                     <TableHead>URL</TableHead>
-                    <TableHead className="w-[100px]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.citations?.map((citation: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-mono">
-                        <Badge variant="outline">{citation.count}</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{citation.title}</TableCell>
-                      <TableCell className="text-sm text-gray-600 max-w-md truncate">
-                        {citation.url}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(citation.url, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )) || (
+                  {data.citations.length > 0 ? (
+                    data.citations.map((citation: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-mono">
+                          <Badge variant="outline">{citation.count}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm max-w-md truncate">
+                          {citation.url}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-gray-500">
+                      <TableCell colSpan={2} className="text-center text-gray-500">
                         No citations available
                       </TableCell>
                     </TableRow>

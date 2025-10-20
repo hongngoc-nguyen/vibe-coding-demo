@@ -1,143 +1,276 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request: NextRequest) {
   try {
-    // Return empty data structure - real implementation needed
-    return NextResponse.json({
-      trends: [],
-      platforms: [],
-      clusters: [],
-      citations: [],
-      metrics: {
-        uniqueMentions: 0,
-        totalCitations: 0,
-        growthRate: 0
+    // Use service role for analytics to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
       }
-    })
-
-    /* Original database logic - commented for demo
-    const supabase = await createClient()
-
-    // Verify authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    )
 
     const { searchParams } = new URL(request.url)
     const days = parseInt(searchParams.get('days') || '30')
-    const platform = searchParams.get('platform') || 'all'
-    const cluster = searchParams.get('cluster') || 'all'
+    const dateFilter = searchParams.get('date') || 'all'
+    const platformFilter = searchParams.get('platform') || 'all'
 
+    // Calculate date ranges
+    const endDate = new Date()
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    const previousStartDate = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000)
 
-    // Build query conditions
-    let platformFilter = ''
-    if (platform !== 'all') {
-      const platformMap: { [key: string]: string } = {
-        'chatgpt': 'ChatGPT',
-        'google-ai': 'Google AI',
-        'copilot': 'Microsoft Copilot'
-      }
-      platformFilter = platformMap[platform] || platform
+    // Get brand entity IDs
+    const { data: brandEntities } = await supabase
+      .from('entities')
+      .select('entity_id')
+      .eq('entity_type', 'brand')
+
+    const brandEntityIds = brandEntities?.map(e => e.entity_id) || []
+
+    if (brandEntityIds.length === 0) {
+      return NextResponse.json({
+        metrics: { totalCitations: 0, growthRate: 0 },
+        uniqueCitationChart: [],
+        platformDistribution: [],
+        promptClusters: [],
+        citations: [],
+        availableDates: [],
+        availablePlatforms: []
+      })
     }
 
-    // Get brand mentions with responses
-    let query = supabase
-      .from('brand_mentions')
-      .select(`
-        id,
-        brand_mentioned,
-        mention_count,
-        brand_citation,
-        responses!inner(response_date, platform, prompt_id, prompts!inner(prompt_cluster))
-      `)
-      .eq('brand_mentioned', true)
-      .gte('responses.response_date', startDate.toISOString())
+    // 1. Total Citations (current period)
+    const { data: currentCitations } = await supabase
+      .from('citation_listing')
+      .select('url, response_id(response_date)')
+      .in('entity_id', brandEntityIds)
+      .gte('response_id.response_date', startDate.toISOString())
 
-    if (platformFilter) {
-      query = query.eq('responses.platform', platformFilter)
+    const totalCitations = new Set(currentCitations?.map(c => c.url) || []).size
+
+    // 2. Growth Rate (previous period)
+    const { data: previousCitations } = await supabase
+      .from('citation_listing')
+      .select('url')
+      .in('entity_id', brandEntityIds)
+      .gte('response_id.response_date', previousStartDate.toISOString())
+      .lt('response_id.response_date', startDate.toISOString())
+
+    const previousTotal = new Set(previousCitations?.map(c => c.url) || []).size
+    const growthRate = previousTotal > 0 ? ((totalCitations - previousTotal) / previousTotal) * 100 : 0
+
+    // 3. Unique Citation Chart (responses with brand URLs vs total responses by date)
+    const { data: allResponses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+      .gte('response_date', startDate.toISOString())
+
+    // Get all brand citations without join first
+    const { data: brandCitationRaw } = await supabase
+      .from('citation_listing')
+      .select('response_id')
+      .in('entity_id', brandEntityIds)
+
+    // Get unique response IDs
+    const brandResponseIds = [...new Set(brandCitationRaw?.map(c => c.response_id) || [])]
+
+    // Get those responses with their dates
+    const { data: brandResponses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+      .in('response_id', brandResponseIds)
+      .gte('response_date', startDate.toISOString())
+
+    const uniqueCitationChart = processUniqueCitationChart(allResponses || [], brandResponses || [])
+
+    // 4. Platform Distribution (brand citations by platform over time)
+    const { data: platformData } = await supabase
+      .from('citation_listing')
+      .select('url, platform, response_id(response_date)')
+      .in('entity_id', brandEntityIds)
+      .gte('response_id.response_date', startDate.toISOString())
+
+    const platformDistribution = processPlatformDistribution(platformData || [])
+
+    // 5. Prompt Clusters Chart
+    // Get brand responses with prompts
+    const { data: brandResponsesWithPrompts } = await supabase
+      .from('responses')
+      .select('response_id, response_date, prompts:prompt_id(prompt_cluster)')
+      .in('response_id', brandResponseIds)
+      .gte('response_date', startDate.toISOString())
+
+    const { data: allResponsesWithClusters } = await supabase
+      .from('responses')
+      .select('response_id, response_date, prompts:prompt_id(prompt_cluster)')
+      .gte('response_date', startDate.toISOString())
+
+    const promptClusters = processPromptClusters(allResponsesWithClusters || [], brandResponsesWithPrompts || [])
+
+    // 6. Citation Sources Table
+    let citationsQuery = supabase
+      .from('citation_listing')
+      .select('url, response_id(response_date), platform')
+      .in('entity_id', brandEntityIds)
+
+    if (dateFilter !== 'all') {
+      citationsQuery = citationsQuery.eq('response_id.response_date', dateFilter)
+    }
+    if (platformFilter !== 'all') {
+      citationsQuery = citationsQuery.eq('platform', platformFilter)
     }
 
-    const { data: mentions } = await query
+    const { data: citationsData } = await citationsQuery
 
-    // Process data for charts
-    const processedData = processBrandData(mentions || [], days)
+    const citations = processCitations(citationsData || [])
 
-    return NextResponse.json(processedData)
-    */
+    // Get available filter options
+    const { data: availableDatesData } = await supabase
+      .from('responses')
+      .select('response_date')
+      .order('response_date', { ascending: false })
+
+    const availableDates = [...new Set(availableDatesData?.map(d => d.response_date.split('T')[0]) || [])]
+
+    const { data: availablePlatformsData } = await supabase
+      .from('citation_listing')
+      .select('platform')
+      .in('entity_id', brandEntityIds)
+
+    const availablePlatforms = [...new Set(availablePlatformsData?.map(p => p.platform) || [])]
+
+    return NextResponse.json({
+      metrics: {
+        totalCitations,
+        growthRate: Number(growthRate.toFixed(1))
+      },
+      uniqueCitationChart,
+      platformDistribution,
+      promptClusters,
+      citations,
+      availableDates,
+      availablePlatforms
+    })
   } catch (error) {
     console.error('Error fetching brand analytics:', error)
     return NextResponse.json({ error: 'Failed to fetch brand analytics' }, { status: 500 })
   }
 }
 
-function processBrandData(mentions: any[], days: number) {
-  // Generate trend data
-  const trends = []
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    const dateStr = date.toISOString().split('T')[0]
+function processUniqueCitationChart(allResponses: any[], brandResponses: any[]) {
+  const dateMap = new Map<string, { total: Set<string>, withBrand: Set<string> }>()
 
-    const dayMentions = mentions.filter(m => {
-      const mentionDate = new Date(m.responses.response_date).toISOString().split('T')[0]
-      return mentionDate === dateStr
-    })
-
-    trends.push({
-      date: dateStr,
-      mentions: dayMentions.length,
-      citations: dayMentions.filter(m => m.brand_citation).length
-    })
-  }
-
-  // Platform distribution
-  const platformCounts = mentions.reduce((acc, mention) => {
-    const platform = mention.responses.platform
-    acc[platform] = acc[platform] || { mentions: 0, citations: 0 }
-    acc[platform].mentions++
-    if (mention.brand_citation) {
-      acc[platform].citations++
+  // Count all responses by date
+  allResponses.forEach(response => {
+    const date = response.response_date.split('T')[0]
+    if (!dateMap.has(date)) {
+      dateMap.set(date, { total: new Set(), withBrand: new Set() })
     }
-    return acc
-  }, {})
+    dateMap.get(date)!.total.add(response.response_id)
+  })
 
-  const platforms = Object.entries(platformCounts).map(([name, data]: [string, any]) => ({
-    name,
-    mentions: data.mentions,
-    citations: data.citations
-  }))
-
-  // Prompt clusters
-  const clusterCounts = mentions.reduce((acc, mention) => {
-    const cluster = mention.responses.prompts?.prompt_cluster || 'Unknown'
-    acc[cluster] = (acc[cluster] || 0) + 1
-    return acc
-  }, {})
-
-  const clusters = Object.entries(clusterCounts).map(([name, mentions]) => ({
-    name,
-    mentions
-  }))
-
-  // Calculate metrics
-  const totalMentions = mentions.length
-  const totalCitations = mentions.filter(m => m.brand_citation).length
-  const avgCitations = totalCitations / Math.max(days / 7, 1) // per week
-
-  // Calculate growth (mock for now)
-  const growthRate = Math.random() * 20 - 5 // -5% to +15%
-
-  return {
-    trends,
-    platforms,
-    clusters,
-    metrics: {
-      totalMentions,
-      avgCitations: Number(avgCitations.toFixed(1)),
-      growthRate: Number(growthRate.toFixed(1))
+  // Count responses with brand citations
+  brandResponses.forEach(response => {
+    const date = response.response_date.split('T')[0]
+    if (dateMap.has(date)) {
+      dateMap.get(date)!.withBrand.add(response.response_id)
     }
-  }
+  })
+
+  return Array.from(dateMap.entries())
+    .map(([date, data]) => ({
+      date,
+      brandCitations: data.withBrand.size,
+      totalResponses: data.total.size
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function processPlatformDistribution(data: any[]) {
+  const platformMap = new Map<string, Map<string, Set<string>>>()
+
+  data.forEach(item => {
+    if (!item.response_id) return
+    const date = item.response_id.response_date.split('T')[0]
+    const platform = item.platform
+
+    if (!platformMap.has(date)) {
+      platformMap.set(date, new Map())
+    }
+    if (!platformMap.get(date)!.has(platform)) {
+      platformMap.get(date)!.set(platform, new Set())
+    }
+    platformMap.get(date)!.get(platform)!.add(item.url)
+  })
+
+  return Array.from(platformMap.entries())
+    .map(([date, platforms]) => {
+      const entry: any = { date }
+      platforms.forEach((urls, platform) => {
+        entry[platform] = urls.size
+      })
+      return entry
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function processPromptClusters(allResponses: any[], brandResponses: any[]) {
+  const clusterMap = new Map<string, Map<string, { total: Set<string>, withBrand: Set<string> }>>()
+
+  // Count all responses by date and cluster
+  allResponses.forEach(response => {
+    if (!response.prompts) return
+    const date = response.response_date.split('T')[0]
+    const cluster = response.prompts.prompt_cluster || 'Unclustered'
+
+    if (!clusterMap.has(date)) {
+      clusterMap.set(date, new Map())
+    }
+    if (!clusterMap.get(date)!.has(cluster)) {
+      clusterMap.get(date)!.set(cluster, { total: new Set(), withBrand: new Set() })
+    }
+    clusterMap.get(date)!.get(cluster)!.total.add(response.response_id)
+  })
+
+  // Count responses with brand citations by cluster
+  brandResponses.forEach(response => {
+    if (!response.prompts) return
+    const date = response.response_date.split('T')[0]
+    const cluster = response.prompts.prompt_cluster || 'Unclustered'
+
+    if (clusterMap.has(date) && clusterMap.get(date)!.has(cluster)) {
+      clusterMap.get(date)!.get(cluster)!.withBrand.add(response.response_id)
+    }
+  })
+
+  return Array.from(clusterMap.entries())
+    .map(([date, clusters]) => {
+      const entry: any = { date }
+      clusters.forEach((data, cluster) => {
+        entry[`${cluster}_brand`] = data.withBrand.size
+        entry[`${cluster}_total`] = data.total.size
+      })
+      return entry
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function processCitations(data: any[]) {
+  const urlCounts = new Map<string, number>()
+
+  data.forEach(item => {
+    const count = urlCounts.get(item.url) || 0
+    urlCounts.set(item.url, count + 1)
+  })
+
+  return Array.from(urlCounts.entries())
+    .map(([url, count]) => ({ url, count }))
+    .sort((a, b) => b.count - a.count)
 }
 
