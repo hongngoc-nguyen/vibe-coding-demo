@@ -5,32 +5,51 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Get brand citations grouped by response_date
-    const { data, error } = await supabase
-      .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(response_date),
-        entities:entity_id(canonical_name)
-      `)
-      .eq('entities.canonical_name', 'Anduin')
+    // Step 1: Get Anduin entity IDs
+    const { data: brandEntities } = await supabase
+      .from('entities')
+      .select('entity_id')
+      .eq('canonical_name', 'Anduin')
 
-    if (error) {
-      console.error('Error fetching trend data:', error)
-      return NextResponse.json({ error: 'Failed to fetch trend data' }, { status: 500 })
+    const brandEntityIds = brandEntities?.map(e => e.entity_id) || []
+
+    if (brandEntityIds.length === 0) {
+      return NextResponse.json([])
     }
 
-    // Group by date only (not datetime) and count distinct URLs
+    // Step 2: Get all Anduin citations
+    const { data: citations } = await supabase
+      .from('citation_listing')
+      .select('url, response_id')
+      .in('entity_id', brandEntityIds)
+
+    if (!citations || citations.length === 0) {
+      return NextResponse.json([])
+    }
+
+    // Step 3: Get response dates
+    const responseIds = [...new Set(citations.map(c => c.response_id))]
+    const { data: responses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+      .in('response_id', responseIds)
+
+    // Create a map of response_id to date
+    const responseMap = new Map(
+      responses?.map(r => [r.response_id, r.response_date.split('T')[0]]) || []
+    )
+
+    // Group by date and count distinct URLs
     const citationsByDate = new Map<string, Set<string>>()
 
-    data?.forEach(item => {
-      if (!item.responses) return // Skip if no response data
-      // Extract just the date part (YYYY-MM-DD)
-      const dateOnly = item.responses.response_date.split('T')[0]
-      if (!citationsByDate.has(dateOnly)) {
-        citationsByDate.set(dateOnly, new Set())
+    citations.forEach(citation => {
+      const date = responseMap.get(citation.response_id)
+      if (!date) return
+
+      if (!citationsByDate.has(date)) {
+        citationsByDate.set(date, new Set())
       }
-      citationsByDate.get(dateOnly)!.add(item.url)
+      citationsByDate.get(date)!.add(citation.url)
     })
 
     // Transform to array format and sort by date

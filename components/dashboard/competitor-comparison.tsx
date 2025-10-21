@@ -101,9 +101,9 @@ export function CompetitorComparison() {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border rounded shadow-lg">
-          <p className="font-medium mb-2">{formatXAxisLabel(label)}</p>
+          <p className="font-medium mb-2 text-xs">{formatXAxisLabel(label)}</p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
+            <p key={index} style={{ color: entry.color }} className="text-xs">
               {entry.name}: {entry.value} citations
             </p>
           ))}
@@ -123,7 +123,7 @@ export function CompetitorComparison() {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <LineChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis
               dataKey="date"
@@ -132,7 +132,6 @@ export function CompetitorComparison() {
             />
             <YAxis className="text-xs" />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
             {entities.map((entity, index) => (
               <Line
                 key={entity}

@@ -6,47 +6,80 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
 
     // Get all distinct response dates to find latest and previous
-    const { data: dates } = await supabase
+    const { data: allDates } = await supabase
       .from('responses')
       .select('response_date')
       .order('response_date', { ascending: false })
-      .limit(2)
 
-    if (!dates || dates.length < 2) {
+    if (!allDates || allDates.length === 0) {
       return NextResponse.json({
         totalCitations: 0,
         growthRate: 0,
       })
     }
 
-    const latestDate = dates[0].response_date
-    const previousDate = dates[1].response_date
+    // Get unique dates (responses table has multiple entries per date)
+    const uniqueDates = [...new Set(allDates.map(d => d.response_date.split('T')[0]))].sort().reverse()
 
-    // Get current period citations for Anduin
-    const { data: currentCitations } = await supabase
-      .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(response_date),
-        entities:entity_id(canonical_name)
-      `)
-      .eq('responses.response_date', latestDate)
-      .eq('entities.canonical_name', 'Anduin')
+    if (uniqueDates.length < 2) {
+      return NextResponse.json({
+        totalCitations: 0,
+        growthRate: 0,
+      })
+    }
 
-    // Get previous period citations for Anduin
-    const { data: previousCitations } = await supabase
+    const latestDate = uniqueDates[0]
+    const previousDate = uniqueDates[1]
+
+    // Step 1: Get Anduin entity IDs
+    const { data: brandEntities } = await supabase
+      .from('entities')
+      .select('entity_id')
+      .eq('canonical_name', 'Anduin')
+
+    const brandEntityIds = brandEntities?.map(e => e.entity_id) || []
+
+    if (brandEntityIds.length === 0) {
+      return NextResponse.json({
+        totalCitations: 0,
+        growthRate: 0,
+      })
+    }
+
+    // Step 2: Get all Anduin citations
+    const { data: allCitations } = await supabase
       .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(response_date),
-        entities:entity_id(canonical_name)
-      `)
-      .eq('responses.response_date', previousDate)
-      .eq('entities.canonical_name', 'Anduin')
+      .select('url, response_id')
+      .in('entity_id', brandEntityIds)
+
+    if (!allCitations || allCitations.length === 0) {
+      return NextResponse.json({
+        totalCitations: 0,
+        growthRate: 0,
+        latestDate,
+        previousDate,
+      })
+    }
+
+    // Step 3: Get response dates for these citations
+    const responseIds = [...new Set(allCitations.map(c => c.response_id))]
+    const { data: responses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+      .in('response_id', responseIds)
+
+    // Create a map of response_id to date
+    const responseMap = new Map(
+      responses?.map(r => [r.response_id, r.response_date.split('T')[0]]) || []
+    )
+
+    // Filter citations by date
+    const currentCitations = allCitations.filter(c => responseMap.get(c.response_id) === latestDate)
+    const previousCitations = allCitations.filter(c => responseMap.get(c.response_id) === previousDate)
 
     // Count distinct URLs
-    const currentCount = new Set(currentCitations?.map(c => c.url) || []).size
-    const previousCount = new Set(previousCitations?.map(c => c.url) || []).size
+    const currentCount = new Set(currentCitations.map(c => c.url)).size
+    const previousCount = new Set(previousCitations.map(c => c.url)).size
 
     // Calculate growth rate
     const growthRate = previousCount > 0

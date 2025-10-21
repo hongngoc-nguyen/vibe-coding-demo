@@ -99,19 +99,39 @@ export async function GET(request: NextRequest) {
     const platformDistribution = processPlatformDistribution(platformData || [])
 
     // 5. Prompt Clusters Chart
-    // Get brand responses with prompts
-    const { data: brandResponsesWithPrompts } = await supabase
-      .from('responses')
-      .select('response_id, response_date, prompts:prompt_id(prompt_cluster)')
-      .in('response_id', brandResponseIds)
-      .gte('response_date', startDate.toISOString())
+    // Use same approach as dashboard - get citations with response details
+    const { data: allBrandCitations } = await supabase
+      .from('citation_listing')
+      .select('url, response_id')
+      .in('entity_id', brandEntityIds)
 
-    const { data: allResponsesWithClusters } = await supabase
-      .from('responses')
-      .select('response_id, response_date, prompts:prompt_id(prompt_cluster)')
-      .gte('response_date', startDate.toISOString())
+    // Filter by date after getting the data (since join filtering doesn't work)
+    const brandCitationsForClusters = allBrandCitations?.filter(c => {
+      const responseDate = brandResponses?.find(r => r.response_id === c.response_id)?.response_date
+      return responseDate && new Date(responseDate) >= startDate
+    }) || []
 
-    const promptClusters = processPromptClusters(allResponsesWithClusters || [], brandResponsesWithPrompts || [])
+    // Get response details for brand citations
+    const brandClusterResponseIds = [...new Set(brandCitationsForClusters?.map(c => c.response_id) || [])]
+
+    const { data: responsesWithDates } = await supabase
+      .from('responses')
+      .select('response_id, response_date, prompt_id')
+      .in('response_id', brandClusterResponseIds)
+
+    // Get prompt clusters
+    const promptIds = [...new Set(responsesWithDates?.map(r => r.prompt_id).filter(Boolean) || [])]
+
+    const { data: prompts } = await supabase
+      .from('prompts')
+      .select('prompt_id, prompt_cluster')
+      .in('prompt_id', promptIds)
+
+    const promptClusters = processPromptClusters(
+      brandCitationsForClusters || [],
+      responsesWithDates || [],
+      prompts || []
+    )
 
     // 6. Citation Sources Table
     let citationsQuery = supabase
@@ -220,45 +240,58 @@ function processPlatformDistribution(data: any[]) {
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
-function processPromptClusters(allResponses: any[], brandResponses: any[]) {
-  const clusterMap = new Map<string, Map<string, { total: Set<string>, withBrand: Set<string> }>>()
+function processPromptClusters(citations: any[], responses: any[], prompts: any[]) {
+  // Create prompt cluster map
+  const promptClusterMap = new Map(prompts.map(p => [p.prompt_id, p.prompt_cluster]))
 
-  // Count all responses by date and cluster
-  allResponses.forEach(response => {
-    if (!response.prompts) return
-    const date = response.response_date.split('T')[0]
-    const cluster = response.prompts.prompt_cluster || 'Unclustered'
+  // Create response to date/cluster map
+  const responseMap = new Map(
+    responses.map(r => [
+      r.response_id,
+      {
+        date: r.response_date.split('T')[0],
+        cluster: promptClusterMap.get(r.prompt_id) || 'Unclustered'
+      }
+    ])
+  )
 
-    if (!clusterMap.has(date)) {
-      clusterMap.set(date, new Map())
+  // Group by date and cluster, count distinct URLs
+  const dataByDate = new Map<string, Map<string, Set<string>>>()
+
+  citations.forEach(citation => {
+    const responseInfo = responseMap.get(citation.response_id)
+    if (!responseInfo) return
+
+    const { date, cluster } = responseInfo
+
+    if (!dataByDate.has(date)) {
+      dataByDate.set(date, new Map())
     }
-    if (!clusterMap.get(date)!.has(cluster)) {
-      clusterMap.get(date)!.set(cluster, { total: new Set(), withBrand: new Set() })
+    if (!dataByDate.get(date)!.has(cluster)) {
+      dataByDate.get(date)!.set(cluster, new Set())
     }
-    clusterMap.get(date)!.get(cluster)!.total.add(response.response_id)
+
+    dataByDate.get(date)!.get(cluster)!.add(citation.url)
   })
 
-  // Count responses with brand citations by cluster
-  brandResponses.forEach(response => {
-    if (!response.prompts) return
-    const date = response.response_date.split('T')[0]
-    const cluster = response.prompts.prompt_cluster || 'Unclustered'
-
-    if (clusterMap.has(date) && clusterMap.get(date)!.has(cluster)) {
-      clusterMap.get(date)!.get(cluster)!.withBrand.add(response.response_id)
-    }
+  // Get all unique clusters
+  const allClusters = new Set<string>()
+  dataByDate.forEach(clusters => {
+    clusters.forEach((_, cluster) => allClusters.add(cluster))
   })
 
-  return Array.from(clusterMap.entries())
+  // Transform to array format with all clusters for each date
+  const chartData = Array.from(dataByDate.entries())
     .map(([date, clusters]) => {
       const entry: any = { date }
-      clusters.forEach((data, cluster) => {
-        entry[`${cluster}_brand`] = data.withBrand.size
-        entry[`${cluster}_total`] = data.total.size
+      allClusters.forEach(cluster => {
+        entry[cluster] = clusters.get(cluster)?.size || 0
       })
       return entry
     })
     .sort((a, b) => a.date.localeCompare(b.date))
+
+  return chartData
 }
 
 function processCitations(data: any[]) {

@@ -108,6 +108,22 @@ export function BrandInsights() {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border rounded shadow-lg">
+          <p className="font-medium mb-2 text-xs">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }} className="text-xs">
+              {entry.name}: {entry.value}
+            </p>
+          ))}
+        </div>
+      )
+    }
+    return null
+  }
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -163,13 +179,12 @@ export function BrandInsights() {
           </CardHeader>
           <CardContent>
             <div ref={uniqueCitationChartRef}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={data.uniqueCitationChart}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="brandCitations" stackId="a" fill="#162950" name="With Brand Citations" />
                   <Bar dataKey="totalResponses" stackId="a" fill="#94a3b8" name="Without Brand Citations" />
                 </BarChart>
@@ -186,13 +201,12 @@ export function BrandInsights() {
           </CardHeader>
           <CardContent>
             <div ref={platformChartRef}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={data.platformDistribution}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip content={<CustomTooltip />} />
                   {data.availablePlatforms.map((platform: string, idx: number) => (
                     <Line
                       key={platform}
@@ -212,21 +226,49 @@ export function BrandInsights() {
         <Card>
           <CardHeader>
             <CardTitle>Prompt Clusters</CardTitle>
-            <CardDescription>Brand citations vs total responses grouped by prompt cluster</CardDescription>
+            <CardDescription>Brand citations distribution across prompt types</CardDescription>
           </CardHeader>
           <CardContent>
             <div ref={clusterChartRef}>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.promptClusters}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Unclustered_brand" stackId="a" fill="#162950" name="Unclustered (Brand)" />
-                  <Bar dataKey="Unclustered_total" stackId="a" fill="#94a3b8" name="Unclustered (Total)" />
-                </BarChart>
-              </ResponsiveContainer>
+              {data.promptClusters.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={data.promptClusters}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="date" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip content={<CustomTooltip />} />
+                    {(() => {
+                      // Extract all unique cluster names from the data
+                      const clusterNames = new Set<string>()
+                      data.promptClusters.forEach((item: any) => {
+                        Object.keys(item).forEach(key => {
+                          if (key !== 'date') {
+                            clusterNames.add(key)
+                          }
+                        })
+                      })
+
+                      // Define colors for clusters
+                      const clusterColors = ['#162950', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6']
+
+                      // Render a bar for each cluster
+                      return Array.from(clusterNames).map((cluster, idx) => (
+                        <Bar
+                          key={cluster}
+                          dataKey={cluster}
+                          stackId="a"
+                          fill={clusterColors[idx % clusterColors.length]}
+                          name={cluster}
+                        />
+                      ))
+                    })()}
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[320px] flex items-center justify-center text-gray-500">
+                  No prompt cluster data available
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

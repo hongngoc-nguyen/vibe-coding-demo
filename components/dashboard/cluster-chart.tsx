@@ -91,13 +91,13 @@ export function ClusterChart() {
       const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0)
       return (
         <div className="bg-white p-3 border rounded shadow-lg">
-          <p className="font-medium mb-2">{formatXAxisLabel(label)}</p>
+          <p className="font-medium mb-2 text-xs">{formatXAxisLabel(label)}</p>
           {payload.reverse().map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
+            <p key={index} style={{ color: entry.color }} className="text-xs">
               {entry.name}: {entry.value}
             </p>
           ))}
-          <p className="font-medium text-sm mt-2 pt-2 border-t">
+          <p className="font-medium text-xs mt-2 pt-2 border-t">
             Total: {total}
           </p>
         </div>
@@ -116,7 +116,7 @@ export function ClusterChart() {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
-          <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis
               dataKey="date"
@@ -125,7 +125,6 @@ export function ClusterChart() {
             />
             <YAxis className="text-xs" />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
             {clusters.map((cluster, index) => (
               <Area
                 key={cluster}
