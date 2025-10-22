@@ -4,7 +4,6 @@ import { Navigation } from '@/components/layout/navigation'
 import { DashboardMetrics } from '@/components/dashboard/metrics'
 import { BrandTrendChart } from '@/components/dashboard/trend-chart'
 import { ClusterChart } from '@/components/dashboard/cluster-chart'
-import { CompetitorComparison } from '@/components/dashboard/competitor-comparison'
 import { QuickInsights } from '@/components/dashboard/quick-insights'
 import { PlatformDistribution } from '@/components/dashboard/platform-distribution'
 
@@ -48,10 +47,6 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <BrandTrendChart />
           <ClusterChart />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 mt-8">
-          <CompetitorComparison />
         </div>
       </main>
     </div>
