@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Checkbox } from '@/components/ui/checkbox'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 export function PlatformDistribution() {
   const [data, setData] = useState<any>({
@@ -10,6 +11,7 @@ export function PlatformDistribution() {
     availablePlatforms: []
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [visiblePlatforms, setVisiblePlatforms] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchPlatformData()
@@ -24,6 +26,8 @@ export function PlatformDistribution() {
         platformDistribution: result.platformDistribution || [],
         availablePlatforms: result.availablePlatforms || []
       })
+      // Initialize all platforms as visible
+      setVisiblePlatforms(new Set(result.availablePlatforms || []))
     } catch (error) {
       console.error('Failed to fetch platform data:', error)
       setData({
@@ -33,6 +37,24 @@ export function PlatformDistribution() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const togglePlatform = (platform: string) => {
+    setVisiblePlatforms(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(platform)) {
+        newSet.delete(platform)
+      } else {
+        newSet.add(platform)
+      }
+      return newSet
+    })
+  }
+
+  const calculatePlatformTotal = (platform: string) => {
+    return data.platformDistribution.reduce((sum: number, item: any) => {
+      return sum + (item[platform] || 0)
+    }, 0)
   }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -64,6 +86,8 @@ export function PlatformDistribution() {
     )
   }
 
+  const platformColors = ['#162950', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
+
   return (
     <Card>
       <CardHeader>
@@ -77,17 +101,56 @@ export function PlatformDistribution() {
             <XAxis dataKey="date" className="text-xs" />
             <YAxis className="text-xs" />
             <Tooltip content={<CustomTooltip />} />
-            {data.availablePlatforms.map((platform: string, idx: number) => (
-              <Line
-                key={platform}
-                type="monotone"
-                dataKey={platform}
-                stroke={['#162950', '#3b82f6', '#10b981', '#f59e0b'][idx % 4]}
-                name={platform}
-              />
-            ))}
+            {data.availablePlatforms.map((platform: string, idx: number) =>
+              visiblePlatforms.has(platform) && (
+                <Line
+                  key={platform}
+                  type="monotone"
+                  dataKey={platform}
+                  stroke={platformColors[idx % platformColors.length]}
+                  name={platform}
+                  strokeWidth={2}
+                />
+              )
+            )}
           </LineChart>
         </ResponsiveContainer>
+
+        {/* Custom Interactive Legend */}
+        <div className="mt-6 space-y-2">
+          {data.availablePlatforms.map((platform: string, idx: number) => {
+            const total = calculatePlatformTotal(platform)
+            const color = platformColors[idx % platformColors.length]
+
+            return (
+              <div
+                key={platform}
+                className="flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <Checkbox
+                    checked={visiblePlatforms.has(platform)}
+                    onCheckedChange={() => togglePlatform(platform)}
+                    className="data-[state=checked]:bg-[#162950] data-[state=checked]:border-[#162950]"
+                  />
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => togglePlatform(platform)}
+                  >
+                    <div
+                      className="w-8 h-0.5 rounded"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="text-sm font-medium text-gray-700">{platform}</span>
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-gray-900 tabular-nums">
+                  {total.toLocaleString()}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       </CardContent>
     </Card>
   )

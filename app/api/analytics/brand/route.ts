@@ -274,11 +274,18 @@ function processPlatformDistribution(data: any[]) {
     platformMap.get(date)!.get(platform)!.add(item.url)
   })
 
+  // Get all unique platforms
+  const allPlatforms = new Set<string>()
+  platformMap.forEach(platforms => {
+    platforms.forEach((_, platform) => allPlatforms.add(platform))
+  })
+
+  // Transform to array format with all platforms for each date (fill missing with 0)
   return Array.from(platformMap.entries())
     .map(([date, platforms]) => {
       const entry: any = { date }
-      platforms.forEach((urls, platform) => {
-        entry[platform] = urls.size
+      allPlatforms.forEach(platform => {
+        entry[platform] = platforms.get(platform)?.size || 0
       })
       return entry
     })
