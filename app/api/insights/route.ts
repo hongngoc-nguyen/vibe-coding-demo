@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    // Use service role for insights to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
 
-    // Get latest two response dates for comparison
+    // Get latest response date only
     const { data: dates } = await supabase
       .from('responses')
       .select('response_date')
       .order('response_date', { ascending: false })
-      .limit(2)
+      .limit(1)
 
-    if (!dates || dates.length < 2) {
+    if (!dates || dates.length < 1) {
       return NextResponse.json({
         insights: [],
         lastUpdate: new Date().toISOString(),
@@ -20,63 +30,103 @@ export async function GET(request: NextRequest) {
     }
 
     const latestDate = dates[0].response_date
-    const previousDate = dates[1].response_date
 
-    // Get current citations for Anduin
-    const { data: currentCitations } = await supabase
-      .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(response_date),
-        entities:entity_id(canonical_name)
-      `)
-      .eq('responses.response_date', latestDate)
-      .eq('entities.canonical_name', 'Anduin')
+    // Get Anduin entity IDs
+    const { data: anduinEntities } = await supabase
+      .from('entities')
+      .select('entity_id')
+      .eq('canonical_name', 'Anduin')
 
-    // Get previous citations for Anduin
-    const { data: previousCitations } = await supabase
-      .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(response_date),
-        entities:entity_id(canonical_name)
-      `)
-      .eq('responses.response_date', previousDate)
-      .eq('entities.canonical_name', 'Anduin')
+    const anduinEntityIds = anduinEntities?.map(e => e.entity_id) || []
 
-    // Get competitor citations for current date
-    const { data: competitorCitations } = await supabase
-      .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(response_date),
-        entities:entity_id(canonical_name, entity_type)
-      `)
-      .eq('responses.response_date', latestDate)
-      .eq('entities.entity_type', 'competitor')
+    // Get ALL response IDs (not filtered by date)
+    const { data: allResponses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
 
-    // Get citations by cluster for current date
-    const { data: clusterCitations } = await supabase
+    const allResponseIds = new Set(allResponses?.map(r => r.response_id) || [])
+
+    // Get all Anduin citations
+    const { data: allAnduinCitations } = await supabase
       .from('citation_listing')
-      .select(`
-        url,
-        responses:response_id(
-          response_date,
-          prompts:prompt_id(prompt_cluster)
-        ),
-        entities:entity_id(canonical_name)
-      `)
-      .eq('responses.response_date', latestDate)
-      .eq('entities.canonical_name', 'Anduin')
+      .select('url, response_id')
+      .in('entity_id', anduinEntityIds)
+
+    // Filter citations - keep all that have valid response_ids
+    const currentCitations = allAnduinCitations?.filter(c =>
+      allResponseIds.has(c.response_id)
+    ) || []
+
+    // Get competitor entity IDs and their citations for latest date
+    const { data: competitorEntities } = await supabase
+      .from('entities')
+      .select('entity_id, canonical_name')
+      .eq('entity_type', 'competitor')
+
+    const competitorEntityIds = competitorEntities?.map(e => e.entity_id) || []
+
+    const { data: allCompetitorCitations } = await supabase
+      .from('citation_listing')
+      .select('url, response_id, entity_id')
+      .in('entity_id', competitorEntityIds)
+
+    // Filter competitor citations and add entity names
+    const competitorCitations = allCompetitorCitations
+      ?.filter(c => allResponseIds.has(c.response_id))
+      .map(c => {
+        const entity = competitorEntities?.find(e => e.entity_id === c.entity_id)
+        return {
+          url: c.url,
+          canonical_name: entity?.canonical_name || 'Unknown'
+        }
+      }) || []
+
+    // Get cluster data for Anduin citations
+    const { data: allResponsesWithPrompts } = await supabase
+      .from('responses')
+      .select('response_id, prompt_id')
+
+    const { data: prompts } = await supabase
+      .from('prompts')
+      .select('prompt_id, prompt_cluster')
+
+    const promptMap = new Map(prompts?.map(p => [p.prompt_id, p.prompt_cluster]) || [])
+    const responsePromptMap = new Map(
+      allResponsesWithPrompts?.map(r => [r.response_id, promptMap.get(r.prompt_id)]) || []
+    )
+
+    // Filter Anduin citations with cluster info
+    const clusterCitations = allAnduinCitations
+      ?.filter(c => allResponseIds.has(c.response_id))
+      .map(c => ({
+        url: c.url,
+        prompt_cluster: responsePromptMap.get(c.response_id) || 'Unclustered'
+      })) || []
+
+    // Get platform citations for current date (brand only)
+    const { data: brandEntities } = await supabase
+      .from('entities')
+      .select('entity_id')
+      .eq('canonical_name', 'Anduin')
+      .eq('entity_type', 'brand')
+
+    const brandEntityIds = brandEntities?.map(e => e.entity_id) || []
+
+    const { data: allPlatformCitations } = await supabase
+      .from('citation_listing')
+      .select('url, platform, response_id')
+      .in('entity_id', brandEntityIds)
+
+    const platformCitations = allPlatformCitations?.filter(c =>
+      allResponseIds.has(c.response_id)
+    ) || []
 
     // Generate insights based on data
     const insights = generateInsights({
-      currentCitations: currentCitations || [],
-      previousCitations: previousCitations || [],
       competitorCitations: competitorCitations || [],
       clusterCitations: clusterCitations || [],
+      platformCitations: platformCitations || [],
       latestDate,
-      previousDate,
     })
 
     return NextResponse.json({
@@ -92,41 +142,10 @@ export async function GET(request: NextRequest) {
 function generateInsights(data: any) {
   const insights = []
 
-  // Count distinct URLs for current and previous periods
-  const currentCount = new Set(data.currentCitations.map((c: any) => c.url)).size
-  const previousCount = new Set(data.previousCitations.map((c: any) => c.url)).size
-
-  // Trend insight
-  if (currentCount > previousCount) {
-    const growth = Math.round(((currentCount - previousCount) / Math.max(previousCount, 1)) * 100)
-    insights.push({
-      type: 'trend',
-      title: 'Citations Trending Up',
-      description: `Brand citations increased ${growth}% (${currentCount} vs ${previousCount})`,
-      timestamp: new Date().toISOString(),
-    })
-  } else if (currentCount < previousCount) {
-    const decline = Math.round(((previousCount - currentCount) / Math.max(previousCount, 1)) * 100)
-    insights.push({
-      type: 'alert',
-      title: 'Citations Declining',
-      description: `Brand citations decreased ${decline}% (${currentCount} vs ${previousCount})`,
-      timestamp: new Date().toISOString(),
-    })
-  } else {
-    insights.push({
-      type: 'info',
-      title: 'Citations Stable',
-      description: `Brand citations remained stable at ${currentCount}`,
-      timestamp: new Date().toISOString(),
-    })
-  }
-
   // Competitor activity - count distinct URLs per competitor
   const competitorCounts: { [key: string]: Set<string> } = {}
   data.competitorCitations.forEach((citation: any) => {
-    if (!citation.entities) return // Skip if no entity data
-    const competitorName = citation.entities.canonical_name
+    const competitorName = citation.canonical_name
     if (!competitorCounts[competitorName]) {
       competitorCounts[competitorName] = new Set()
     }
@@ -140,11 +159,10 @@ function generateInsights(data: any) {
   const topCompetitor = competitorSizes.sort((a, b) => b.count - a.count)[0]
 
   if (topCompetitor && topCompetitor.count > 0) {
-    const comparison = topCompetitor.count > currentCount ? 'ahead of' : 'behind'
     insights.push({
-      type: topCompetitor.count > currentCount ? 'alert' : 'success',
+      type: 'info',
       title: 'Top Competitor',
-      description: `${topCompetitor.name} has ${topCompetitor.count} citations, ${comparison} Anduin`,
+      description: `${topCompetitor.name} has ${topCompetitor.count} citations`,
       timestamp: new Date().toISOString(),
     })
   }
@@ -152,8 +170,7 @@ function generateInsights(data: any) {
   // Cluster performance - count distinct URLs per cluster
   const clusterCounts: { [key: string]: Set<string> } = {}
   data.clusterCitations.forEach((citation: any) => {
-    if (!citation.responses) return // Skip if no response data
-    const cluster = citation.responses.prompts?.prompt_cluster || 'Unclustered'
+    const cluster = citation.prompt_cluster || 'Unclustered'
     if (!clusterCounts[cluster]) {
       clusterCounts[cluster] = new Set()
     }
@@ -168,12 +185,37 @@ function generateInsights(data: any) {
 
   if (topCluster && topCluster.count > 0) {
     insights.push({
-      type: 'success',
+      type: 'info',
       title: 'Top Performing Cluster',
       description: `"${topCluster.name}" cluster leading with ${topCluster.count} citations`,
       timestamp: new Date().toISOString(),
     })
   }
 
-  return insights.slice(0, 4) // Limit to 4 insights
+  // Platform performance - count distinct URLs per platform
+  const platformCounts: { [key: string]: Set<string> } = {}
+  data.platformCitations.forEach((citation: any) => {
+    const platform = citation.platform
+    if (!platformCounts[platform]) {
+      platformCounts[platform] = new Set()
+    }
+    platformCounts[platform].add(citation.url)
+  })
+
+  const platformSizes = Object.entries(platformCounts).map(([name, urls]) => ({
+    name,
+    count: urls.size
+  }))
+  const topPlatform = platformSizes.sort((a, b) => b.count - a.count)[0]
+
+  if (topPlatform && topPlatform.count > 0) {
+    insights.push({
+      type: 'info',
+      title: 'Top Platform Appearance',
+      description: `Most active on ${topPlatform.name} with ${topPlatform.count} citations`,
+      timestamp: new Date().toISOString(),
+    })
+  }
+
+  return insights.slice(0, 3) // Limit to 3 insights
 }

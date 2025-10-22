@@ -45,24 +45,40 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 1. Total Citations (current period)
-    const { data: currentCitations } = await supabase
+    // Get all responses in date range for filtering
+    const { data: currentPeriodResponses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+      .gte('response_date', startDate.toISOString())
+
+    const { data: previousPeriodResponses } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+      .gte('response_date', previousStartDate.toISOString())
+      .lt('response_date', startDate.toISOString())
+
+    const currentPeriodResponseIds = new Set(currentPeriodResponses?.map(r => r.response_id) || [])
+    const previousPeriodResponseIds = new Set(previousPeriodResponses?.map(r => r.response_id) || [])
+
+    // Get all brand citations
+    const { data: allBrandCitationsRaw } = await supabase
       .from('citation_listing')
-      .select('url, response_id(response_date)')
+      .select('url, response_id')
       .in('entity_id', brandEntityIds)
-      .gte('response_id.response_date', startDate.toISOString())
 
-    const totalCitations = new Set(currentCitations?.map(c => c.url) || []).size
+    // 1. Total Citations (current period) - filter in JavaScript
+    const currentCitations = allBrandCitationsRaw?.filter(c =>
+      currentPeriodResponseIds.has(c.response_id)
+    ) || []
 
-    // 2. Growth Rate (previous period)
-    const { data: previousCitations } = await supabase
-      .from('citation_listing')
-      .select('url')
-      .in('entity_id', brandEntityIds)
-      .gte('response_id.response_date', previousStartDate.toISOString())
-      .lt('response_id.response_date', startDate.toISOString())
+    const totalCitations = new Set(currentCitations.map(c => c.url)).size
 
-    const previousTotal = new Set(previousCitations?.map(c => c.url) || []).size
+    // 2. Growth Rate (previous period) - filter in JavaScript
+    const previousCitations = allBrandCitationsRaw?.filter(c =>
+      previousPeriodResponseIds.has(c.response_id)
+    ) || []
+
+    const previousTotal = new Set(previousCitations.map(c => c.url)).size
     const growthRate = previousTotal > 0 ? ((totalCitations - previousTotal) / previousTotal) * 100 : 0
 
     // 3. Unique Citation Chart (responses with brand URLs vs total responses by date)
@@ -90,13 +106,26 @@ export async function GET(request: NextRequest) {
     const uniqueCitationChart = processUniqueCitationChart(allResponses || [], brandResponses || [])
 
     // 4. Platform Distribution (brand citations by platform over time)
-    const { data: platformData } = await supabase
+    // Get all brand citations with platform
+    const { data: allPlatformCitations } = await supabase
       .from('citation_listing')
-      .select('url, platform, response_id(response_date)')
+      .select('url, platform, response_id')
       .in('entity_id', brandEntityIds)
-      .gte('response_id.response_date', startDate.toISOString())
 
-    const platformDistribution = processPlatformDistribution(platformData || [])
+    // Filter for current period and add response dates
+    const platformData = allPlatformCitations
+      ?.filter(c => currentPeriodResponseIds.has(c.response_id))
+      .map(c => {
+        const response = currentPeriodResponses?.find(r => r.response_id === c.response_id)
+        return {
+          url: c.url,
+          platform: c.platform,
+          response_date: response?.response_date
+        }
+      })
+      .filter(c => c.response_date) || []
+
+    const platformDistribution = processPlatformDistribution(platformData)
 
     // 5. Prompt Clusters Chart
     // Use same approach as dashboard - get citations with response details
@@ -134,21 +163,37 @@ export async function GET(request: NextRequest) {
     )
 
     // 6. Citation Sources Table
-    let citationsQuery = supabase
+    // Get all brand citations with platform
+    const { data: allCitationsForTable } = await supabase
       .from('citation_listing')
-      .select('url, response_id(response_date), platform')
+      .select('url, response_id, platform')
       .in('entity_id', brandEntityIds)
 
+    // Get responses for date filtering
+    let responsesForFiltering = currentPeriodResponses || []
+
     if (dateFilter !== 'all') {
-      citationsQuery = citationsQuery.eq('response_id.response_date', dateFilter)
+      // Get responses for specific date
+      const { data: specificDateResponses } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+        .eq('response_date', dateFilter)
+
+      responsesForFiltering = specificDateResponses || []
     }
+
+    const filterResponseIds = new Set(responsesForFiltering.map(r => r.response_id))
+
+    // Filter citations by date and platform
+    let filteredCitations = allCitationsForTable?.filter(c =>
+      filterResponseIds.has(c.response_id)
+    ) || []
+
     if (platformFilter !== 'all') {
-      citationsQuery = citationsQuery.eq('platform', platformFilter)
+      filteredCitations = filteredCitations.filter(c => c.platform === platformFilter)
     }
 
-    const { data: citationsData } = await citationsQuery
-
-    const citations = processCitations(citationsData || [])
+    const citations = processCitations(filteredCitations)
 
     // Get available filter options
     const { data: availableDatesData } = await supabase
@@ -216,8 +261,8 @@ function processPlatformDistribution(data: any[]) {
   const platformMap = new Map<string, Map<string, Set<string>>>()
 
   data.forEach(item => {
-    if (!item.response_id) return
-    const date = item.response_id.response_date.split('T')[0]
+    if (!item.response_date) return
+    const date = item.response_date.split('T')[0]
     const platform = item.platform
 
     if (!platformMap.has(date)) {

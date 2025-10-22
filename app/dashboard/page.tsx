@@ -6,6 +6,7 @@ import { BrandTrendChart } from '@/components/dashboard/trend-chart'
 import { ClusterChart } from '@/components/dashboard/cluster-chart'
 import { CompetitorComparison } from '@/components/dashboard/competitor-comparison'
 import { QuickInsights } from '@/components/dashboard/quick-insights'
+import { PlatformDistribution } from '@/components/dashboard/platform-distribution'
 
 export default async function DashboardPage() {
   const user = await currentUser()
@@ -27,8 +28,18 @@ export default async function DashboardPage() {
       <Navigation user={userData} userRole={userRole} />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-brand-navy">Brand Monitoring Dashboard</h1>
-          <p className="text-gray-600 mt-2">Track Anduin's AEO performance across platforms</p>
+          <h1 className="text-3xl font-bold text-brand-navy">Overview</h1>
+          <p className="text-gray-600 mt-2">Quick view of general metrics across all entities</p>
+        </div>
+
+        {/* Quick Insights Section */}
+        <div className="mb-8">
+          <QuickInsights />
+        </div>
+
+        {/* Platform Distribution Chart */}
+        <div className="mb-8">
+          <PlatformDistribution />
         </div>
 
         <DashboardMetrics />
@@ -41,13 +52,6 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 gap-6 mt-8">
           <CompetitorComparison />
-        </div>
-
-        {/* Insights Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-          <div className="lg:col-span-3">
-            <QuickInsights />
-          </div>
         </div>
       </main>
     </div>

@@ -25,20 +25,44 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Get citation sources with filters
-    let citationsQuery = supabase
+    // Get citation sources with filters - multi-step approach
+    // Get all citations for competitor entities
+    const { data: allCompetitorCitations } = await supabase
       .from('citation_listing')
-      .select('url, response_id(response_date), platform, entity_id')
+      .select('url, response_id, platform, entity_id')
       .in('entity_id', competitorEntityIds)
 
+    // Get responses for date filtering
+    let responsesForFiltering
     if (dateFilter !== 'all') {
-      citationsQuery = citationsQuery.eq('response_id.response_date', dateFilter)
-    }
-    if (platformFilter !== 'all') {
-      citationsQuery = citationsQuery.eq('platform', platformFilter)
+      // Get responses for specific date
+      const { data: specificDateResponses } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+        .eq('response_date', dateFilter)
+
+      responsesForFiltering = specificDateResponses || []
+    } else {
+      // Get all responses
+      const { data: allResponses } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+
+      responsesForFiltering = allResponses || []
     }
 
-    const { data: citationsData } = await citationsQuery
+    const filterResponseIds = new Set(responsesForFiltering.map(r => r.response_id))
+
+    // Filter citations by date and platform in JavaScript
+    let filteredCitations = allCompetitorCitations?.filter(c =>
+      filterResponseIds.has(c.response_id)
+    ) || []
+
+    if (platformFilter !== 'all') {
+      filteredCitations = filteredCitations.filter(c => c.platform === platformFilter)
+    }
+
+    const citationsData = filteredCitations
 
     // Get entity canonical names
     const { data: entitiesData } = await supabase

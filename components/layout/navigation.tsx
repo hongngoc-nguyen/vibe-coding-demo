@@ -33,7 +33,7 @@ export function Navigation({ user, userRole }: NavigationProps) {
   }
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/dashboard', label: 'Overview', icon: Home },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   ]
 

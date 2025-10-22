@@ -193,35 +193,6 @@ export function BrandInsights() {
           </CardContent>
         </Card>
 
-        {/* Platform Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Platform Distribution</CardTitle>
-            <CardDescription>Brand citations breakdown by platform over time</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div ref={platformChartRef}>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={data.platformDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip content={<CustomTooltip />} />
-                  {data.availablePlatforms.map((platform: string, idx: number) => (
-                    <Line
-                      key={platform}
-                      type="monotone"
-                      dataKey={platform}
-                      stroke={['#162950', '#3b82f6', '#10b981', '#f59e0b'][idx % 4]}
-                      name={platform}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Prompt Clusters */}
         <Card>
           <CardHeader>
