@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+function getNextDay(dateString: string): string {
+  const date = new Date(dateString)
+  date.setDate(date.getDate() + 1)
+  return date.toISOString().split('T')[0]
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Use service role for analytics to bypass RLS
@@ -89,7 +95,9 @@ export async function GET(request: NextRequest) {
       .gte('response_date', startDate.toISOString())
 
     if (dateFilter !== 'all') {
-      chartResponsesQuery = chartResponsesQuery.eq('response_date', dateFilter)
+      chartResponsesQuery = chartResponsesQuery
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
     }
 
     const { data: allResponses } = await chartResponsesQuery
@@ -111,7 +119,9 @@ export async function GET(request: NextRequest) {
       .gte('response_date', startDate.toISOString())
 
     if (dateFilter !== 'all') {
-      brandResponsesQuery = brandResponsesQuery.eq('response_date', dateFilter)
+      brandResponsesQuery = brandResponsesQuery
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
     }
 
     const { data: brandResponses } = await brandResponsesQuery
@@ -125,11 +135,15 @@ export async function GET(request: NextRequest) {
       .select('url, platform, response_id')
       .in('entity_id', brandEntityIds)
 
-    // Filter for current period and add response dates
+    // Determine which response set to use based on date filter
+    const platformResponseSet = dateFilter !== 'all' ? brandResponses : currentPeriodResponses
+    const platformResponseIds = new Set(platformResponseSet?.map(r => r.response_id) || [])
+
+    // Filter for responses in the selected period and add response dates
     const platformData = allPlatformCitations
-      ?.filter(c => currentPeriodResponseIds.has(c.response_id))
+      ?.filter(c => platformResponseIds.has(c.response_id))
       .map(c => {
-        const response = currentPeriodResponses?.find(r => r.response_id === c.response_id)
+        const response = platformResponseSet?.find(r => r.response_id === c.response_id)
         return {
           url: c.url,
           platform: c.platform,
@@ -162,7 +176,9 @@ export async function GET(request: NextRequest) {
       .in('response_id', brandClusterResponseIds)
 
     if (dateFilter !== 'all') {
-      responsesWithDatesQuery = responsesWithDatesQuery.eq('response_date', dateFilter)
+      responsesWithDatesQuery = responsesWithDatesQuery
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
     }
 
     const { data: responsesWithDates } = await responsesWithDatesQuery
@@ -196,7 +212,8 @@ export async function GET(request: NextRequest) {
       const { data: specificDateResponses } = await supabase
         .from('responses')
         .select('response_id, response_date')
-        .eq('response_date', dateFilter)
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
 
       responsesForFiltering = specificDateResponses || []
     }
@@ -222,12 +239,8 @@ export async function GET(request: NextRequest) {
 
     const availableDates = [...new Set(availableDatesData?.map(d => d.response_date.split('T')[0]) || [])]
 
-    const { data: availablePlatformsData } = await supabase
-      .from('citation_listing')
-      .select('platform')
-      .in('entity_id', brandEntityIds)
-
-    const availablePlatforms = [...new Set(availablePlatformsData?.map(p => p.platform) || [])]
+    // Get available platforms from filtered citations only
+    const availablePlatforms = [...new Set(filteredCitations?.map(c => c.platform) || [])]
 
     return NextResponse.json({
       metrics: {

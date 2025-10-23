@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+function getNextDay(dateString: string): string {
+  const date = new Date(dateString)
+  date.setDate(date.getDate() + 1)
+  return date.toISOString().split('T')[0]
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -36,11 +42,12 @@ export async function GET(request: NextRequest) {
     // Get responses for date filtering
     let responsesForFiltering
     if (dateFilter !== 'all') {
-      // Get responses for specific date
+      // Get responses for specific date range
       const { data: specificDateResponses } = await supabase
         .from('responses')
         .select('response_id, response_date')
-        .eq('response_date', dateFilter)
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
 
       responsesForFiltering = specificDateResponses || []
     } else {
@@ -84,12 +91,8 @@ export async function GET(request: NextRequest) {
 
     const availableDates = [...new Set(availableDatesData?.map(d => d.response_date.split('T')[0]) || [])]
 
-    const { data: availablePlatformsData } = await supabase
-      .from('citation_listing')
-      .select('platform')
-      .in('entity_id', otherEntityIds)
-
-    const availablePlatforms = [...new Set(availablePlatformsData?.map(p => p.platform) || [])]
+    // Get available platforms from filtered citations only
+    const availablePlatforms = [...new Set(filteredCitations?.map(c => c.platform) || [])]
 
     return NextResponse.json({
       citations,
