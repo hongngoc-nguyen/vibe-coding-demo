@@ -143,6 +143,42 @@ export function BrandInsights() {
 
   return (
     <div className="space-y-6">
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Filter by Date</label>
+              <Select value={citationDateFilter} onValueChange={setCitationDateFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Dates</SelectItem>
+                  {data.availableDates.map((date: string) => (
+                    <SelectItem key={date} value={date}>{date}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Filter by Platform</label>
+              <Select value={citationPlatformFilter} onValueChange={setCitationPlatformFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Platforms</SelectItem>
+                  {data.availablePlatforms.map((platform: string) => (
+                    <SelectItem key={platform} value={platform}>{platform}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
@@ -245,39 +281,9 @@ export function BrandInsights() {
         <Card>
           <CardHeader>
             <CardTitle>Citation Sources</CardTitle>
-            <CardDescription>All brand citations with counts and filters</CardDescription>
+            <CardDescription>All brand citations with counts</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Filter by Date</label>
-                <Select value={citationDateFilter} onValueChange={setCitationDateFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Dates</SelectItem>
-                    {data.availableDates.map((date: string) => (
-                      <SelectItem key={date} value={date}>{date}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Filter by Platform</label>
-                <Select value={citationPlatformFilter} onValueChange={setCitationPlatformFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Platforms</SelectItem>
-                    {data.availablePlatforms.map((platform: string) => (
-                      <SelectItem key={platform} value={platform}>{platform}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
             <div ref={citationsTableRef}>
               <Table>
                 <TableHeader>

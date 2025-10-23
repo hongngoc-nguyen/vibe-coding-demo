@@ -82,10 +82,17 @@ export async function GET(request: NextRequest) {
     const growthRate = previousTotal > 0 ? ((totalCitations - previousTotal) / previousTotal) * 100 : 0
 
     // 3. Unique Citation Chart (responses with brand URLs vs total responses by date)
-    const { data: allResponses } = await supabase
+    // Apply date filter if specified
+    let chartResponsesQuery = supabase
       .from('responses')
       .select('response_id, response_date')
       .gte('response_date', startDate.toISOString())
+
+    if (dateFilter !== 'all') {
+      chartResponsesQuery = chartResponsesQuery.eq('response_date', dateFilter)
+    }
+
+    const { data: allResponses } = await chartResponsesQuery
 
     // Get all brand citations without join first
     const { data: brandCitationRaw } = await supabase
@@ -96,12 +103,18 @@ export async function GET(request: NextRequest) {
     // Get unique response IDs
     const brandResponseIds = [...new Set(brandCitationRaw?.map(c => c.response_id) || [])]
 
-    // Get those responses with their dates
-    const { data: brandResponses } = await supabase
+    // Get those responses with their dates, applying date filter
+    let brandResponsesQuery = supabase
       .from('responses')
       .select('response_id, response_date')
       .in('response_id', brandResponseIds)
       .gte('response_date', startDate.toISOString())
+
+    if (dateFilter !== 'all') {
+      brandResponsesQuery = brandResponsesQuery.eq('response_date', dateFilter)
+    }
+
+    const { data: brandResponses } = await brandResponsesQuery
 
     const uniqueCitationChart = processUniqueCitationChart(allResponses || [], brandResponses || [])
 
@@ -143,10 +156,16 @@ export async function GET(request: NextRequest) {
     // Get response details for brand citations
     const brandClusterResponseIds = [...new Set(brandCitationsForClusters?.map(c => c.response_id) || [])]
 
-    const { data: responsesWithDates } = await supabase
+    let responsesWithDatesQuery = supabase
       .from('responses')
       .select('response_id, response_date, prompt_id')
       .in('response_id', brandClusterResponseIds)
+
+    if (dateFilter !== 'all') {
+      responsesWithDatesQuery = responsesWithDatesQuery.eq('response_date', dateFilter)
+    }
+
+    const { data: responsesWithDates } = await responsesWithDatesQuery
 
     // Get prompt clusters
     const promptIds = [...new Set(responsesWithDates?.map(r => r.prompt_id).filter(Boolean) || [])]
