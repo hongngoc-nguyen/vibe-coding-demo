@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, parseISO } from 'date-fns'
+import { CHART_COLORS } from '@/lib/chart-colors'
 
 interface CompetitiveData {
   date: string
@@ -13,17 +14,6 @@ interface CompetitiveData {
 interface PlatformCompetitorComparisonProps {
   platform: string
 }
-
-const ENTITY_COLORS = [
-  '#162950', // brand-navy (Anduin)
-  '#2563eb', // blue-600
-  '#60a5fa', // blue-400
-  '#34d399', // emerald-400
-  '#fbbf24', // amber-400
-  '#f87171', // red-400
-  '#a78bfa', // violet-400
-  '#fb923c', // orange-400
-]
 
 export function PlatformCompetitorComparison({ platform }: PlatformCompetitorComparisonProps) {
   const [data, setData] = useState<CompetitiveData[]>([])
@@ -163,9 +153,9 @@ export function PlatformCompetitorComparison({ platform }: PlatformCompetitorCom
                 key={entity}
                 type="monotone"
                 dataKey={entity}
-                stroke={ENTITY_COLORS[index % ENTITY_COLORS.length]}
+                stroke={CHART_COLORS[index % CHART_COLORS.length]}
                 strokeWidth={entity === 'Anduin' ? 3 : 2}
-                dot={{ fill: ENTITY_COLORS[index % ENTITY_COLORS.length], r: entity === 'Anduin' ? 5 : 4 }}
+                dot={{ fill: CHART_COLORS[index % CHART_COLORS.length], r: entity === 'Anduin' ? 5 : 4 }}
                 name={entity}
               />
             ))}

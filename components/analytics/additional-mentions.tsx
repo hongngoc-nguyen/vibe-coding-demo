@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { UrlPreview } from './url-preview'
+import { BRAND_COLOR } from '@/lib/chart-colors'
 
 export function AdditionalMentions() {
   const [citationDateFilter, setCitationDateFilter] = useState('all')
@@ -146,7 +147,7 @@ export function AdditionalMentions() {
                 <XAxis type="number" className="text-xs" />
                 <YAxis type="category" dataKey="entity" width={120} className="text-xs" />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="citations" fill="#162950" />
+                <Bar dataKey="citations" fill={BRAND_COLOR} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

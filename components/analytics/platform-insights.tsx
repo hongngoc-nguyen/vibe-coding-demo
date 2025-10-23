@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { PlatformCompetitorComparison } from './platform-competitor-comparison'
+import { CHART_COLORS } from '@/lib/chart-colors'
 
 interface PlatformInsightsProps {
   platform: string
@@ -54,8 +55,6 @@ export function PlatformInsights({ platform }: PlatformInsightsProps) {
     if (days === 90) return 'vs last 90 days'
     return 'vs previous period'
   }
-
-  const COLORS = ['#162950', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6']
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -150,7 +149,7 @@ export function PlatformInsights({ platform }: PlatformInsightsProps) {
                           key={cluster}
                           dataKey={cluster}
                           stackId="a"
-                          fill={COLORS[idx % COLORS.length]}
+                          fill={CHART_COLORS[idx % CHART_COLORS.length]}
                           name={cluster}
                         />
                       ))

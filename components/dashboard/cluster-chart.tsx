@@ -4,22 +4,12 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { format, parseISO } from 'date-fns'
+import { CHART_COLORS } from '@/lib/chart-colors'
 
 interface ClusterData {
   date: string
   [cluster: string]: string | number
 }
-
-const CLUSTER_COLORS = [
-  '#162950', // brand-navy
-  '#60a5fa', // blue-400
-  '#34d399', // emerald-400
-  '#fbbf24', // amber-400
-  '#f87171', // red-400
-  '#a78bfa', // violet-400
-  '#fb923c', // orange-400
-  '#2dd4bf', // teal-400
-]
 
 export function ClusterChart() {
   const [data, setData] = useState<ClusterData[]>([])
@@ -131,8 +121,8 @@ export function ClusterChart() {
                 type="monotone"
                 dataKey={cluster}
                 stackId="1"
-                stroke={CLUSTER_COLORS[index % CLUSTER_COLORS.length]}
-                fill={CLUSTER_COLORS[index % CLUSTER_COLORS.length]}
+                stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                fill={CHART_COLORS[index % CHART_COLORS.length]}
                 fillOpacity={0.6}
                 name={cluster}
               />

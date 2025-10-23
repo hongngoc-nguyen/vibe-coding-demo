@@ -11,6 +11,7 @@ import { Download, Filter, Calendar, FileText, ExternalLink } from 'lucide-react
 import { exportToCSV, exportToPDF } from '@/lib/export-utils'
 import { toast } from 'sonner'
 import { UrlPreview } from './url-preview'
+import { CHART_COLORS, BRAND_COLOR, NEUTRAL_COLOR } from '@/lib/chart-colors'
 
 export function BrandInsights() {
   const [dateRange, setDateRange] = useState('30')
@@ -107,8 +108,6 @@ export function BrandInsights() {
     }
   }
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -186,8 +185,8 @@ export function BrandInsights() {
                   <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="brandCitations" stackId="a" fill="#162950" name="With Brand Citations" />
-                  <Bar dataKey="totalResponses" stackId="a" fill="#94a3b8" name="Without Brand Citations" />
+                  <Bar dataKey="brandCitations" stackId="a" fill={BRAND_COLOR} name="With Brand Citations" />
+                  <Bar dataKey="totalResponses" stackId="a" fill={NEUTRAL_COLOR} name="Without Brand Citations" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -220,16 +219,13 @@ export function BrandInsights() {
                         })
                       })
 
-                      // Define colors for clusters
-                      const clusterColors = ['#162950', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6']
-
                       // Render a bar for each cluster
                       return Array.from(clusterNames).map((cluster, idx) => (
                         <Bar
                           key={cluster}
                           dataKey={cluster}
                           stackId="a"
-                          fill={clusterColors[idx % clusterColors.length]}
+                          fill={CHART_COLORS[idx % CHART_COLORS.length]}
                           name={cluster}
                         />
                       ))

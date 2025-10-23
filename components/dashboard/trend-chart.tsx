@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { format, parseISO } from 'date-fns'
+import { BRAND_COLOR } from '@/lib/chart-colors'
 
 interface TrendData {
   date: string
@@ -101,9 +102,9 @@ export function BrandTrendChart() {
             <Line
               type="monotone"
               dataKey="citations"
-              stroke="#162950"
+              stroke={BRAND_COLOR}
               strokeWidth={2}
-              dot={{ fill: '#162950', r: 4 }}
+              dot={{ fill: BRAND_COLOR, r: 4 }}
               name="Citations"
             />
           </LineChart>
