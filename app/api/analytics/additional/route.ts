@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     if (otherEntityIds.length === 0) {
       return NextResponse.json({
         citations: [],
+        topEntities: [],
         availableDates: [],
         availablePlatforms: []
       })
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest) {
     const entityMap = new Map(entitiesData?.map(e => [e.entity_id, e.canonical_name]) || [])
 
     const citations = processCitations(citationsData || [], entityMap)
+    const topEntities = processTopEntities(filteredCitations || [], entityMap)
 
     // Get available filter options
     const { data: availableDatesData } = await supabase
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       citations,
+      topEntities,
       availableDates,
       availablePlatforms
     })
@@ -117,4 +120,22 @@ function processCitations(data: any[], entityMap: Map<string, string>) {
       canonical_name: Array.from(data.entityIds).map(id => entityMap.get(id)).filter(Boolean).join(', ')
     }))
     .sort((a, b) => b.count - a.count)
+}
+
+function processTopEntities(data: any[], entityMap: Map<string, string>) {
+  // Count ALL citations per entity (including duplicate URLs)
+  const entityCounts = new Map<string, number>()
+
+  data.forEach(citation => {
+    const entityName = entityMap.get(citation.entity_id)
+    if (entityName) {
+      entityCounts.set(entityName, (entityCounts.get(entityName) || 0) + 1)
+    }
+  })
+
+  // Convert to array, sort by count descending, take top 10
+  return Array.from(entityCounts.entries())
+    .map(([entity, citations]) => ({ entity, citations }))
+    .sort((a, b) => b.citations - a.citations)
+    .slice(0, 10)
 }
