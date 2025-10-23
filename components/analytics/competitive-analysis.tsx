@@ -5,27 +5,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { UrlPreview } from './url-preview'
 
 export function CompetitiveAnalysis() {
   const [citationDateFilter, setCitationDateFilter] = useState('all')
   const [citationPlatformFilter, setCitationPlatformFilter] = useState('all')
+  const [citationCompetitorFilter, setCitationCompetitorFilter] = useState('all')
   const [data, setData] = useState<any>({
     citations: [],
     availableDates: [],
-    availablePlatforms: []
+    availablePlatforms: [],
+    availableCompetitors: []
   })
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchCompetitiveData()
-  }, [citationDateFilter, citationPlatformFilter])
+  }, [citationDateFilter, citationPlatformFilter, citationCompetitorFilter])
 
   const fetchCompetitiveData = async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
         date: citationDateFilter,
-        platform: citationPlatformFilter
+        platform: citationPlatformFilter,
+        competitor: citationCompetitorFilter
       })
 
       const response = await fetch(`/api/analytics/competitors?${params}`)
@@ -36,7 +40,8 @@ export function CompetitiveAnalysis() {
       setData({
         citations: [],
         availableDates: [],
-        availablePlatforms: []
+        availablePlatforms: [],
+        availableCompetitors: []
       })
     } finally {
       setIsLoading(false)
@@ -63,7 +68,7 @@ export function CompetitiveAnalysis() {
         <CardDescription>All competitor citations with counts and filters</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Filter by Date</label>
             <Select value={citationDateFilter} onValueChange={setCitationDateFilter}>
@@ -92,6 +97,20 @@ export function CompetitiveAnalysis() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Filter by Competitor</label>
+            <Select value={citationCompetitorFilter} onValueChange={setCitationCompetitorFilter}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Competitors</SelectItem>
+                {data.availableCompetitors.map((competitor: string) => (
+                  <SelectItem key={competitor} value={competitor}>{competitor}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -111,8 +130,8 @@ export function CompetitiveAnalysis() {
                   <TableCell className="font-medium">
                     {citation.canonical_name}
                   </TableCell>
-                  <TableCell className="text-sm max-w-md truncate">
-                    {citation.url}
+                  <TableCell className="text-sm">
+                    <UrlPreview url={citation.url} />
                   </TableCell>
                 </TableRow>
               ))

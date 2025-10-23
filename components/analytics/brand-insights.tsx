@@ -10,6 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Download, Filter, Calendar, FileText, ExternalLink } from 'lucide-react'
 import { exportToCSV, exportToPDF } from '@/lib/export-utils'
 import { toast } from 'sonner'
+import { UrlPreview } from './url-preview'
 
 export function BrandInsights() {
   const [dateRange, setDateRange] = useState('30')
@@ -296,8 +297,8 @@ export function BrandInsights() {
                         <TableCell className="font-mono">
                           <Badge variant="outline">{citation.count}</Badge>
                         </TableCell>
-                        <TableCell className="text-sm max-w-md truncate">
-                          {citation.url}
+                        <TableCell className="text-sm">
+                          <UrlPreview url={citation.url} />
                         </TableCell>
                       </TableRow>
                     ))

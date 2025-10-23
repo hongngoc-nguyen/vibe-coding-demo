@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { UrlPreview } from './url-preview'
 
 export function AdditionalMentions() {
   const [citationDateFilter, setCitationDateFilter] = useState('all')
@@ -111,8 +112,8 @@ export function AdditionalMentions() {
                   <TableCell className="font-medium">
                     {citation.canonical_name}
                   </TableCell>
-                  <TableCell className="text-sm max-w-md truncate">
-                    {citation.url}
+                  <TableCell className="text-sm">
+                    <UrlPreview url={citation.url} />
                   </TableCell>
                 </TableRow>
               ))

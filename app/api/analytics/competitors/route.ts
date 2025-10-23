@@ -8,20 +8,36 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const dateFilter = searchParams.get('date') || 'all'
     const platformFilter = searchParams.get('platform') || 'all'
+    const competitorFilter = searchParams.get('competitor') || 'all'
 
     // Get competitor entity IDs
-    const { data: competitorEntities } = await supabase
+    let competitorQuery = supabase
       .from('entities')
-      .select('entity_id')
+      .select('entity_id, canonical_name')
       .eq('entity_type', 'competitor')
+
+    // Filter by specific competitor if selected
+    if (competitorFilter !== 'all') {
+      competitorQuery = competitorQuery.eq('canonical_name', competitorFilter)
+    }
+
+    const { data: competitorEntities } = await competitorQuery
 
     const competitorEntityIds = competitorEntities?.map(e => e.entity_id) || []
 
     if (competitorEntityIds.length === 0) {
+      // Still get available competitors for the filter dropdown
+      const { data: allCompetitors } = await supabase
+        .from('entities')
+        .select('canonical_name')
+        .eq('entity_type', 'competitor')
+        .order('canonical_name', { ascending: true })
+
       return NextResponse.json({
         citations: [],
         availableDates: [],
-        availablePlatforms: []
+        availablePlatforms: [],
+        availableCompetitors: allCompetitors?.map(c => c.canonical_name) || []
       })
     }
 
@@ -89,10 +105,20 @@ export async function GET(request: NextRequest) {
 
     const availablePlatforms = [...new Set(availablePlatformsData?.map(p => p.platform) || [])]
 
+    // Get all competitor names for the filter dropdown
+    const { data: allCompetitors } = await supabase
+      .from('entities')
+      .select('canonical_name')
+      .eq('entity_type', 'competitor')
+      .order('canonical_name', { ascending: true })
+
+    const availableCompetitors = allCompetitors?.map(c => c.canonical_name) || []
+
     return NextResponse.json({
       citations,
       availableDates,
-      availablePlatforms
+      availablePlatforms,
+      availableCompetitors
     })
   } catch (error) {
     console.error('Error fetching competitor analytics:', error)
