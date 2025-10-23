@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useClerk } from '@clerk/nextjs'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -27,11 +27,26 @@ export function Navigation({ user, userRole }: NavigationProps) {
   const router = useRouter()
   const { signOut } = useClerk()
   const [showAnalyticsDropdown, setShowAnalyticsDropdown] = useState(false)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleSignOut = async () => {
     await signOut()
     router.push('/sign-in')
     toast.success('Signed out successfully')
+  }
+
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    setShowAnalyticsDropdown(true)
+  }
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setShowAnalyticsDropdown(false)
+    }, 200) // 200ms delay before closing
   }
 
   const isAnalyticsActive = pathname.startsWith('/analytics')
@@ -80,8 +95,8 @@ export function Navigation({ user, userRole }: NavigationProps) {
               {/* Analytics Dropdown */}
               <div
                 className="relative"
-                onMouseEnter={() => setShowAnalyticsDropdown(true)}
-                onMouseLeave={() => setShowAnalyticsDropdown(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
               >
                 <button
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -96,7 +111,7 @@ export function Navigation({ user, userRole }: NavigationProps) {
                 </button>
 
                 {showAnalyticsDropdown && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute top-full left-0 mt-0.5 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
                     {analyticsSubItems.map((subItem) => (
                       <Link
                         key={subItem.href}
