@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, parseISO } from 'date-fns'
@@ -12,68 +12,24 @@ interface ClusterData {
 }
 
 interface GoogleSearchClusterChartProps {
-  dateFilter?: string
+  data?: any[]
 }
 
-export function GoogleSearchClusterChart({ dateFilter = 'all' }: GoogleSearchClusterChartProps) {
-  const [data, setData] = useState<ClusterData[]>([])
-  const [clusters, setClusters] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+export function GoogleSearchClusterChart({ data = [] }: GoogleSearchClusterChartProps) {
+  // Extract all unique cluster names from the data
+  const clusters = useMemo(() => {
+    if (!data || !Array.isArray(data) || data.length === 0) return []
 
-  useEffect(() => {
-    fetchClusterData()
-  }, [dateFilter])
-
-  const fetchClusterData = async () => {
-    setIsLoading(true)
-    try {
-      const params = new URLSearchParams({
-        platform: 'Google Search',
-        date: dateFilter
+    const clusterSet = new Set<string>()
+    data.forEach((item: any) => {
+      Object.keys(item).forEach(key => {
+        if (key !== 'date') {
+          clusterSet.add(key)
+        }
       })
-      const response = await fetch(`/api/analytics/brand?${params}`)
-      const result = await response.json()
-
-      if (result.promptClusters && Array.isArray(result.promptClusters) && result.promptClusters.length > 0) {
-        setData(result.promptClusters)
-
-        // Extract all unique cluster names from the data
-        const clusterSet = new Set<string>()
-        result.promptClusters.forEach((item: any) => {
-          Object.keys(item).forEach(key => {
-            if (key !== 'date') {
-              clusterSet.add(key)
-            }
-          })
-        })
-        setClusters(Array.from(clusterSet))
-      } else {
-        setData([])
-        setClusters([])
-      }
-    } catch (error) {
-      console.error('Failed to fetch Google Search cluster data:', error)
-      setData([])
-      setClusters([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Anduin GG Search Citation Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-navy"></div>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+    })
+    return Array.from(clusterSet)
+  }, [data])
 
   const formatXAxisLabel = (tickItem: string) => {
     try {

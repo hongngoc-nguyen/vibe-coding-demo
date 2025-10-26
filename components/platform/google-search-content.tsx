@@ -10,38 +10,22 @@ import { Badge } from '@/components/ui/badge'
 
 export function GoogleSearchContent() {
   const [dateFilter, setDateFilter] = useState('all')
-  const [availableDates, setAvailableDates] = useState<string[]>([])
-  const [isLoadingDates, setIsLoadingDates] = useState(true)
-  const [metrics, setMetrics] = useState({ totalCitations: 0, growthRate: 0 })
+  const [data, setData] = useState<any>({
+    availableDates: [],
+    metrics: { totalCitations: 0, growthRate: 0 },
+    trendData: [],
+    clusterData: [],
+    uniqueCitationChart: [],
+    citations: []
+  })
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetchAvailableDates()
-  }, [])
-
-  useEffect(() => {
-    fetchMetrics()
+    fetchAllData()
   }, [dateFilter])
 
-  const fetchAvailableDates = async () => {
-    setIsLoadingDates(true)
-    try {
-      const params = new URLSearchParams({
-        platform: 'Google Search',
-        date: 'all'
-      })
-      const response = await fetch(`/api/analytics/brand?${params}`)
-      const result = await response.json()
-      if (result.availableDates) {
-        setAvailableDates(result.availableDates)
-      }
-    } catch (error) {
-      console.error('Failed to fetch available dates:', error)
-    } finally {
-      setIsLoadingDates(false)
-    }
-  }
-
-  const fetchMetrics = async () => {
+  const fetchAllData = async () => {
+    setIsLoading(true)
     try {
       const params = new URLSearchParams({
         platform: 'Google Search',
@@ -49,11 +33,19 @@ export function GoogleSearchContent() {
       })
       const response = await fetch(`/api/analytics/brand?${params}`)
       const result = await response.json()
-      if (result.metrics) {
-        setMetrics(result.metrics)
-      }
+      setData(result)
     } catch (error) {
-      console.error('Failed to fetch metrics:', error)
+      console.error('Failed to fetch platform data:', error)
+      setData({
+        availableDates: [],
+        metrics: { totalCitations: 0, growthRate: 0 },
+        trendData: [],
+        clusterData: [],
+        uniqueCitationChart: [],
+        citations: []
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -66,18 +58,53 @@ export function GoogleSearchContent() {
     return 'Selected period'
   }
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <div className="w-48 h-10 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-2">
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Date Filter */}
       <div className="flex justify-end">
         <div className="w-48">
-          <Select value={dateFilter} onValueChange={setDateFilter} disabled={isLoadingDates}>
+          <Select value={dateFilter} onValueChange={setDateFilter}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Dates</SelectItem>
-              {availableDates.map((date: string) => (
+              {data.availableDates.map((date: string) => (
                 <SelectItem key={date} value={date}>{date}</SelectItem>
               ))}
             </SelectContent>
@@ -92,7 +119,7 @@ export function GoogleSearchContent() {
             <CardTitle className="text-sm font-medium text-gray-600">Total Citations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalCitations}</div>
+            <div className="text-2xl font-bold">{data.metrics.totalCitations}</div>
             <Badge variant="secondary" className="mt-1">
               {getDateRangeText()}
             </Badge>
@@ -103,7 +130,7 @@ export function GoogleSearchContent() {
             <CardTitle className="text-sm font-medium text-gray-600">Growth Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.growthRate}%</div>
+            <div className="text-2xl font-bold">{data.metrics.growthRate}%</div>
             <Badge variant="default" className="mt-1">
               vs previous period
             </Badge>
@@ -113,12 +140,16 @@ export function GoogleSearchContent() {
 
       {/* Charts from Overview - filtered for Google Search */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GoogleSearchTrendChart dateFilter={dateFilter} />
-        <GoogleSearchClusterChart dateFilter={dateFilter} />
+        <GoogleSearchTrendChart data={data.trendData} />
+        <GoogleSearchClusterChart data={data.clusterData} />
       </div>
 
       {/* Platform Insights Section */}
-      <GoogleSearchInsights dateFilter={dateFilter} />
+      <GoogleSearchInsights
+        uniqueCitationChart={data.uniqueCitationChart}
+        citations={data.citations}
+        dateFilter={dateFilter}
+      />
     </div>
   )
 }

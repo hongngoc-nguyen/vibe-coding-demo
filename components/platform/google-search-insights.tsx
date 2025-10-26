@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -10,41 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { UrlPreview } from '../analytics/url-preview'
 
 interface GoogleSearchInsightsProps {
+  uniqueCitationChart?: any[]
+  citations?: any[]
   dateFilter?: string
 }
 
-export function GoogleSearchInsights({ dateFilter = 'all' }: GoogleSearchInsightsProps) {
-  const [data, setData] = useState<any>({
-    uniqueCitationChart: [],
-    citations: []
-  })
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    fetchPlatformData()
-  }, [dateFilter])
-
-  const fetchPlatformData = async () => {
-    setIsLoading(true)
-    try {
-      const params = new URLSearchParams({
-        platform: 'Google Search',
-        date: dateFilter
-      })
-
-      const response = await fetch(`/api/analytics/brand?${params}`)
-      const result = await response.json()
-      setData(result)
-    } catch (error) {
-      console.error('Failed to fetch platform data:', error)
-      setData({
-        uniqueCitationChart: [],
-        citations: []
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+export function GoogleSearchInsights({
+  uniqueCitationChart = [],
+  citations = [],
+  dateFilter = 'all'
+}: GoogleSearchInsightsProps) {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -62,23 +36,6 @@ export function GoogleSearchInsights({ dateFilter = 'all' }: GoogleSearchInsight
     return null
   }
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 bg-gray-200 rounded"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6">
@@ -89,9 +46,9 @@ export function GoogleSearchInsights({ dateFilter = 'all' }: GoogleSearchInsight
             <p className="text-sm text-muted-foreground mt-1">Responses containing brand citations vs total responses over time</p>
           </CardHeader>
           <CardContent>
-            {data.uniqueCitationChart && data.uniqueCitationChart.length > 0 ? (
+            {uniqueCitationChart && uniqueCitationChart.length > 0 ? (
               <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={data.uniqueCitationChart}>
+                <BarChart data={uniqueCitationChart}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" />
@@ -125,8 +82,8 @@ export function GoogleSearchInsights({ dateFilter = 'all' }: GoogleSearchInsight
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.citations && data.citations.length > 0 ? (
-                  data.citations.map((citation: any, index: number) => (
+                {citations && citations.length > 0 ? (
+                  citations.map((citation: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell className="font-mono">
                         <Badge variant="outline">{citation.count}</Badge>
