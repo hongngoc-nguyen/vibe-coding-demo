@@ -43,13 +43,16 @@ export async function GET(request: NextRequest) {
 
     const { data: citations } = await citationQuery
 
-    // Step 3: Get all responses with dates
+    // Step 3: Get all responses with dates (not filtered by responseIds to get all dates)
+    const { data: allResponsesData } = await supabase
+      .from('responses')
+      .select('response_id, response_date')
+
+    // Get all unique dates from all responses
+    const allDates = new Set(allResponsesData?.map(r => r.response_date.split('T')[0]) || [])
+
+    // Get responses that have citations
     const responseIds = [...new Set(citations?.map(c => c.response_id) || [])]
-
-    if (responseIds.length === 0) {
-      return NextResponse.json([])
-    }
-
     const { data: responses } = await supabase
       .from('responses')
       .select('response_id, response_date')
@@ -63,6 +66,11 @@ export async function GET(request: NextRequest) {
     }
 
     const dataByDate = new Map<string, EntityData>()
+
+    // Initialize all dates with empty data
+    allDates.forEach(date => {
+      dataByDate.set(date, {})
+    })
 
     citations?.forEach(item => {
       const responseDate = responseMap.get(item.response_id)

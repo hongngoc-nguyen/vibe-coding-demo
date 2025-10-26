@@ -101,7 +101,7 @@ export function PlatformCompetitorComparison({ platform }: PlatformCompetitorCom
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Brand vs. Competitors</CardTitle>
+          <CardTitle>Anduin vs. Competitors</CardTitle>
           <CardDescription>Citation comparison on {platform}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,7 +117,7 @@ export function PlatformCompetitorComparison({ platform }: PlatformCompetitorCom
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-brand-navy">Brand vs. Competitors</CardTitle>
+          <CardTitle className="text-brand-navy">Anduin vs. Competitors</CardTitle>
           <CardDescription>Citation comparison on {platform}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,7 +132,7 @@ export function PlatformCompetitorComparison({ platform }: PlatformCompetitorCom
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-brand-navy">Brand vs. Competitors</CardTitle>
+        <CardTitle className="text-brand-navy">Anduin vs. Competitors</CardTitle>
         <CardDescription>
           Citation comparison on {platform}
         </CardDescription>

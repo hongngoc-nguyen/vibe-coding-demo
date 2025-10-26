@@ -66,11 +66,17 @@ export async function GET(request: NextRequest) {
     const currentPeriodResponseIds = new Set(currentPeriodResponses?.map(r => r.response_id) || [])
     const previousPeriodResponseIds = new Set(previousPeriodResponses?.map(r => r.response_id) || [])
 
-    // Get all brand citations
-    const { data: allBrandCitationsRaw } = await supabase
+    // Get all brand citations (with platform filter if specified)
+    let brandCitationsQuery = supabase
       .from('citation_listing')
-      .select('url, response_id')
+      .select('url, response_id, platform')
       .in('entity_id', brandEntityIds)
+
+    if (platformFilter !== 'all') {
+      brandCitationsQuery = brandCitationsQuery.eq('platform', platformFilter)
+    }
+
+    const { data: allBrandCitationsRaw } = await brandCitationsQuery
 
     // 1. Total Citations (current period) - filter in JavaScript
     const currentCitations = allBrandCitationsRaw?.filter(c =>
@@ -92,21 +98,28 @@ export async function GET(request: NextRequest) {
     let chartResponsesQuery = supabase
       .from('responses')
       .select('response_id, response_date')
-      .gte('response_date', startDate.toISOString())
 
     if (dateFilter !== 'all') {
+      // Filter by specific date
       chartResponsesQuery = chartResponsesQuery
         .gte('response_date', dateFilter)
         .lt('response_date', getNextDay(dateFilter))
     }
+    // When dateFilter is 'all', don't apply any date restriction to get ALL historical data
 
     const { data: allResponses } = await chartResponsesQuery
 
-    // Get all brand citations without join first
-    const { data: brandCitationRaw } = await supabase
+    // Get all brand citations without join first (with platform filter)
+    let brandCitationQuery = supabase
       .from('citation_listing')
       .select('response_id')
       .in('entity_id', brandEntityIds)
+
+    if (platformFilter !== 'all') {
+      brandCitationQuery = brandCitationQuery.eq('platform', platformFilter)
+    }
+
+    const { data: brandCitationRaw } = await brandCitationQuery
 
     // Get unique response IDs
     const brandResponseIds = [...new Set(brandCitationRaw?.map(c => c.response_id) || [])]
@@ -116,27 +129,35 @@ export async function GET(request: NextRequest) {
       .from('responses')
       .select('response_id, response_date')
       .in('response_id', brandResponseIds)
-      .gte('response_date', startDate.toISOString())
 
     if (dateFilter !== 'all') {
+      // Filter by specific date
       brandResponsesQuery = brandResponsesQuery
         .gte('response_date', dateFilter)
         .lt('response_date', getNextDay(dateFilter))
     }
+    // When dateFilter is 'all', don't apply any date restriction to get ALL historical data
 
     const { data: brandResponses } = await brandResponsesQuery
 
     const uniqueCitationChart = processUniqueCitationChart(allResponses || [], brandResponses || [])
 
     // 4. Platform Distribution (brand citations by platform over time)
-    // Get all brand citations with platform
-    const { data: allPlatformCitations } = await supabase
+    // Get all brand citations with platform (with platform filter)
+    let platformCitationsQuery = supabase
       .from('citation_listing')
       .select('url, platform, response_id')
       .in('entity_id', brandEntityIds)
 
+    if (platformFilter !== 'all') {
+      platformCitationsQuery = platformCitationsQuery.eq('platform', platformFilter)
+    }
+
+    const { data: allPlatformCitations } = await platformCitationsQuery
+
     // Determine which response set to use based on date filter
-    const platformResponseSet = dateFilter !== 'all' ? brandResponses : currentPeriodResponses
+    // When dateFilter is 'all', use brandResponses (which now includes ALL historical data)
+    const platformResponseSet = brandResponses
     const platformResponseIds = new Set(platformResponseSet?.map(r => r.response_id) || [])
 
     // Filter for responses in the selected period and add response dates
@@ -155,16 +176,25 @@ export async function GET(request: NextRequest) {
     const platformDistribution = processPlatformDistribution(platformData)
 
     // 5. Prompt Clusters Chart
-    // Use same approach as dashboard - get citations with response details
-    const { data: allBrandCitations } = await supabase
+    // Use same approach as dashboard - get citations with response details (with platform filter)
+    let brandCitationsForClustersQuery = supabase
       .from('citation_listing')
       .select('url, response_id')
       .in('entity_id', brandEntityIds)
 
+    if (platformFilter !== 'all') {
+      brandCitationsForClustersQuery = brandCitationsForClustersQuery.eq('platform', platformFilter)
+    }
+
+    const { data: allBrandCitations } = await brandCitationsForClustersQuery
+
     // Filter by date after getting the data (since join filtering doesn't work)
+    // Only apply startDate filter if dateFilter is not 'all'
     const brandCitationsForClusters = allBrandCitations?.filter(c => {
       const responseDate = brandResponses?.find(r => r.response_id === c.response_id)?.response_date
-      return responseDate && new Date(responseDate) >= startDate
+      if (!responseDate) return false
+      // When dateFilter is 'all', don't apply startDate restriction to get ALL historical data
+      return dateFilter === 'all' || new Date(responseDate) >= startDate
     }) || []
 
     // Get response details for brand citations
@@ -194,15 +224,22 @@ export async function GET(request: NextRequest) {
     const promptClusters = processPromptClusters(
       brandCitationsForClusters || [],
       responsesWithDates || [],
-      prompts || []
+      prompts || [],
+      allResponses || [] // Pass all responses to get all dates
     )
 
     // 6. Citation Sources Table
-    // Get all brand citations with platform
-    const { data: allCitationsForTable } = await supabase
+    // Get all brand citations with platform (with platform filter)
+    let citationsForTableQuery = supabase
       .from('citation_listing')
       .select('url, response_id, platform')
       .in('entity_id', brandEntityIds)
+
+    if (platformFilter !== 'all') {
+      citationsForTableQuery = citationsForTableQuery.eq('platform', platformFilter)
+    }
+
+    const { data: allCitationsForTable } = await citationsForTableQuery
 
     // Get responses for date filtering
     let responsesForFiltering = currentPeriodResponses || []
@@ -324,7 +361,7 @@ function processPlatformDistribution(data: any[]) {
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
-function processPromptClusters(citations: any[], responses: any[], prompts: any[]) {
+function processPromptClusters(citations: any[], responses: any[], prompts: any[], allResponses: any[]) {
   // Create prompt cluster map
   const promptClusterMap = new Map(prompts.map(p => [p.prompt_id, p.prompt_cluster]))
 
@@ -339,8 +376,16 @@ function processPromptClusters(citations: any[], responses: any[], prompts: any[
     ])
   )
 
+  // Get all unique dates from allResponses to ensure we fill missing dates
+  const allDates = new Set(allResponses.map(r => r.response_date.split('T')[0]))
+
   // Group by date and cluster, count distinct URLs
   const dataByDate = new Map<string, Map<string, Set<string>>>()
+
+  // Initialize all dates with empty data
+  allDates.forEach(date => {
+    dataByDate.set(date, new Map())
+  })
 
   citations.forEach(citation => {
     const responseInfo = responseMap.get(citation.response_id)
