@@ -66,8 +66,14 @@ export async function GET(request: NextRequest) {
     // Get all unique dates from filtered responses
     const allDates = new Set(allResponsesData?.map(r => r.response_date.split('T')[0]) || [])
 
-    // Get responses that have citations
-    const responseIds = [...new Set(citations?.map(c => c.response_id) || [])]
+    // Create a set of filtered response IDs for quick lookup
+    const filteredResponseIds = new Set(allResponsesData?.map(r => r.response_id) || [])
+
+    // Get responses that have citations and are within the date filter
+    const responseIds = [...new Set(citations?.map(c => c.response_id) || [])].filter(id =>
+      filteredResponseIds.has(id)
+    )
+
     const { data: responses } = await supabase
       .from('responses')
       .select('response_id, response_date')
