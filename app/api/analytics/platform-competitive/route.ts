@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+function getNextDay(dateString: string): string {
+  const date = new Date(dateString)
+  date.setDate(date.getDate() + 1)
+  return date.toISOString().split('T')[0]
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Use service role for analytics to bypass RLS
@@ -17,6 +23,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const platform = searchParams.get('platform') || 'all'
+    const dateFilter = searchParams.get('date') || 'all'
 
     // Step 1: Get brand and competitor entity IDs with their names
     const { data: entities } = await supabase
@@ -43,12 +50,20 @@ export async function GET(request: NextRequest) {
 
     const { data: citations } = await citationQuery
 
-    // Step 3: Get all responses with dates (not filtered by responseIds to get all dates)
-    const { data: allResponsesData } = await supabase
+    // Step 3: Get all responses with dates (apply date filter if specified)
+    let allResponsesQuery = supabase
       .from('responses')
       .select('response_id, response_date')
 
-    // Get all unique dates from all responses
+    if (dateFilter !== 'all') {
+      allResponsesQuery = allResponsesQuery
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
+    }
+
+    const { data: allResponsesData } = await allResponsesQuery
+
+    // Get all unique dates from filtered responses
     const allDates = new Set(allResponsesData?.map(r => r.response_date.split('T')[0]) || [])
 
     // Get responses that have citations

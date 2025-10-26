@@ -109,7 +109,7 @@ export function GoogleAIModeInsights({ dateFilter = 'all' }: GoogleAIModeInsight
         </Card>
 
         {/* Anduin vs. Competitors */}
-        <PlatformCompetitorComparison platform="Google AI Mode" />
+        <PlatformCompetitorComparison platform="Google AI Mode" dateFilter={dateFilter} />
 
         {/* Pages appearing on Google AI Mode */}
         <Card>

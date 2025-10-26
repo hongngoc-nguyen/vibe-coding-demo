@@ -108,8 +108,8 @@ export function GoogleSearchInsights({ dateFilter = 'all' }: GoogleSearchInsight
           </CardContent>
         </Card>
 
-        {/* Brand vs. Competitors */}
-        <PlatformCompetitorComparison platform="Google Search" />
+        {/* Anduin vs. Competitors */}
+        <PlatformCompetitorComparison platform="Google Search" dateFilter={dateFilter} />
 
         {/* Pages appearing on Google Search */}
         <Card>
