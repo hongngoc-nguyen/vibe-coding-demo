@@ -1,9 +1,7 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { Navigation } from '@/components/layout/navigation'
-import { DashboardMetrics } from '@/components/dashboard/metrics'
 import { BrandTrendChart } from '@/components/dashboard/trend-chart'
-import { ClusterChart } from '@/components/dashboard/cluster-chart'
 import { QuickInsights } from '@/components/dashboard/quick-insights'
 import { PlatformDistribution } from '@/components/dashboard/platform-distribution'
 
@@ -41,12 +39,9 @@ export default async function DashboardPage() {
           <PlatformDistribution />
         </div>
 
-        <DashboardMetrics />
-
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div className="mt-8">
           <BrandTrendChart />
-          <ClusterChart />
         </div>
       </main>
     </div>
