@@ -92,7 +92,7 @@ export function PlatformDistribution() {
     <Card>
       <CardHeader>
         <CardTitle>Platform Distribution</CardTitle>
-        <CardDescription>Brand citations breakdown by platform over time</CardDescription>
+        <CardDescription>Anduin's appearance across platforms</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>

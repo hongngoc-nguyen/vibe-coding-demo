@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react'
+import { Clock, TrendingUp, Info } from 'lucide-react'
 
 interface Insight {
   type: 'trend' | 'alert' | 'success' | 'info'
@@ -57,29 +56,7 @@ export function QuickInsights() {
   }, [])
 
   const getInsightIcon = (type: string) => {
-    switch (type) {
-      case 'trend':
-        return <TrendingUp className="h-4 w-4 text-blue-500" />
-      case 'alert':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />
-      case 'success':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />
-    }
-  }
-
-  const getBadgeVariant = (type: string) => {
-    switch (type) {
-      case 'trend':
-        return 'default'
-      case 'alert':
-        return 'destructive'
-      case 'success':
-        return 'default'
-      default:
-        return 'secondary'
-    }
+    return <Info className="h-4 w-4 text-gray-500" />
   }
 
   if (isLoading) {
@@ -128,17 +105,9 @@ export function QuickInsights() {
               <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
                 {getInsightIcon(insight.type)}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-sm font-medium text-gray-900 truncate">
-                      {insight.title}
-                    </h4>
-                    <Badge
-                      variant={getBadgeVariant(insight.type) as any}
-                      className="text-xs"
-                    >
-                      {insight.type}
-                    </Badge>
-                  </div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-1">
+                    {insight.title}
+                  </h4>
                   <p className="text-xs text-gray-600">{insight.description}</p>
                 </div>
               </div>

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     const anduinEntityIds = anduinEntities?.map(e => e.entity_id) || []
 
-    // Get ALL response IDs (not filtered by date)
+    // Get ALL response IDs (not filtered by date - we want cumulative data)
     const { data: allResponses } = await supabase
       .from('responses')
       .select('response_id, response_date')
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       insights,
-      lastUpdate: new Date().toISOString(),
+      lastUpdate: latestDate,
     })
   } catch (error) {
     console.error('Error generating insights:', error)
@@ -160,9 +160,9 @@ function generateInsights(data: any) {
 
   if (topCompetitor && topCompetitor.count > 0) {
     insights.push({
-      type: 'info',
-      title: 'Top Competitor',
-      description: `${topCompetitor.name} has ${topCompetitor.count} citations`,
+      type: 'trend',
+      title: 'Best Performing Competitor',
+      description: `${topCompetitor.name}: ${topCompetitor.count} citations`,
       timestamp: new Date().toISOString(),
     })
   }
@@ -185,9 +185,9 @@ function generateInsights(data: any) {
 
   if (topCluster && topCluster.count > 0) {
     insights.push({
-      type: 'info',
-      title: 'Top Performing Cluster',
-      description: `"${topCluster.name}" cluster leading with ${topCluster.count} citations`,
+      type: 'success',
+      title: 'Anduin\'s Top Performing Cluster',
+      description: `"${topCluster.name}": ${topCluster.count} citations`,
       timestamp: new Date().toISOString(),
     })
   }
@@ -210,9 +210,9 @@ function generateInsights(data: any) {
 
   if (topPlatform && topPlatform.count > 0) {
     insights.push({
-      type: 'info',
-      title: 'Top Platform Appearance',
-      description: `Most active on ${topPlatform.name} with ${topPlatform.count} citations`,
+      type: 'alert',
+      title: 'Anduin\'s Top Performing Platform',
+      description: `${topPlatform.name}: ${topPlatform.count} citations`,
       timestamp: new Date().toISOString(),
     })
   }
