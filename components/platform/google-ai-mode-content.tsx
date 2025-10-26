@@ -13,9 +13,8 @@ export function GoogleAIModeContent() {
   const [data, setData] = useState<any>({
     availableDates: [],
     metrics: { totalCitations: 0, growthRate: 0 },
-    trendData: [],
-    clusterData: [],
     uniqueCitationChart: [],
+    promptClusters: [],
     citations: []
   })
   const [isLoading, setIsLoading] = useState(true)
@@ -39,9 +38,8 @@ export function GoogleAIModeContent() {
       setData({
         availableDates: [],
         metrics: { totalCitations: 0, growthRate: 0 },
-        trendData: [],
-        clusterData: [],
         uniqueCitationChart: [],
+        promptClusters: [],
         citations: []
       })
     } finally {

@@ -13,9 +13,8 @@ export function GoogleSearchContent() {
   const [data, setData] = useState<any>({
     availableDates: [],
     metrics: { totalCitations: 0, growthRate: 0 },
-    trendData: [],
-    clusterData: [],
     uniqueCitationChart: [],
+    promptClusters: [],
     citations: []
   })
   const [isLoading, setIsLoading] = useState(true)
@@ -39,9 +38,8 @@ export function GoogleSearchContent() {
       setData({
         availableDates: [],
         metrics: { totalCitations: 0, growthRate: 0 },
-        trendData: [],
-        clusterData: [],
         uniqueCitationChart: [],
+        promptClusters: [],
         citations: []
       })
     } finally {
@@ -140,8 +138,8 @@ export function GoogleSearchContent() {
 
       {/* Charts from Overview - filtered for Google Search */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GoogleSearchTrendChart data={data.trendData} />
-        <GoogleSearchClusterChart data={data.clusterData} />
+        <GoogleSearchTrendChart data={data.uniqueCitationChart} />
+        <GoogleSearchClusterChart data={data.promptClusters} />
       </div>
 
       {/* Platform Insights Section */}
