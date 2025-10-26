@@ -51,7 +51,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([])
     }
 
-    // Step 2: Get all citations for these entities, filtered by platform
+    // Step 2: Build optimized query - get citations with response dates in one query
+    // First get response IDs filtered by date if needed
+    let responseIdsForFilter: string[] | null = null
+    let allDates: Set<string>
+
+    if (dateFilter !== 'all') {
+      const { data: filteredResponses } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
+
+      responseIdsForFilter = filteredResponses?.map(r => r.response_id) || []
+      allDates = new Set(filteredResponses?.map(r => r.response_date.split('T')[0]) || [])
+
+      if (responseIdsForFilter.length === 0) {
+        return NextResponse.json([])
+      }
+    } else {
+      // Get all unique dates from all responses
+      const { data: allResponsesData } = await supabase
+        .from('responses')
+        .select('response_date')
+
+      allDates = new Set(allResponsesData?.map(r => r.response_date.split('T')[0]) || [])
+    }
+
+    // Step 3: Get citations filtered by platform and date (via response_id filter)
     let citationQuery = supabase
       .from('citation_listing')
       .select('url, response_id, entity_id, platform')
@@ -61,36 +88,23 @@ export async function GET(request: NextRequest) {
       citationQuery = citationQuery.eq('platform', platform)
     }
 
-    const { data: citations } = await citationQuery
-
-    // Step 3: Get all responses with dates (apply date filter if specified)
-    let allResponsesQuery = supabase
-      .from('responses')
-      .select('response_id, response_date')
-
-    if (dateFilter !== 'all') {
-      allResponsesQuery = allResponsesQuery
-        .gte('response_date', dateFilter)
-        .lt('response_date', getNextDay(dateFilter))
+    if (responseIdsForFilter) {
+      citationQuery = citationQuery.in('response_id', responseIdsForFilter)
     }
 
-    const { data: allResponsesData } = await allResponsesQuery
+    const { data: citations } = await citationQuery
 
-    // Get all unique dates from filtered responses
-    const allDates = new Set(allResponsesData?.map(r => r.response_date.split('T')[0]) || [])
+    // Step 4: Get response dates only for citations we have (single optimized query)
+    const uniqueResponseIds = [...new Set(citations?.map(c => c.response_id) || [])]
 
-    // Create a set of filtered response IDs for quick lookup
-    const filteredResponseIds = new Set(allResponsesData?.map(r => r.response_id) || [])
-
-    // Get responses that have citations and are within the date filter
-    const responseIds = [...new Set(citations?.map(c => c.response_id) || [])].filter(id =>
-      filteredResponseIds.has(id)
-    )
+    if (uniqueResponseIds.length === 0) {
+      return NextResponse.json([])
+    }
 
     const { data: responses } = await supabase
       .from('responses')
       .select('response_id, response_date')
-      .in('response_id', responseIds)
+      .in('response_id', uniqueResponseIds)
 
     const responseMap = new Map(responses?.map(r => [r.response_id, r.response_date]) || [])
 

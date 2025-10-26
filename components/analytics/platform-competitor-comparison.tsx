@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, parseISO } from 'date-fns'
@@ -17,14 +17,20 @@ interface PlatformCompetitorComparisonProps {
   selectedCompetitors?: string[]
 }
 
-export function PlatformCompetitorComparison({ platform, dateFilter = 'all', selectedCompetitors = [] }: PlatformCompetitorComparisonProps) {
+function PlatformCompetitorComparisonComponent({ platform, dateFilter = 'all', selectedCompetitors = [] }: PlatformCompetitorComparisonProps) {
   const [data, setData] = useState<CompetitiveData[]>([])
   const [entities, setEntities] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Memoize competitors string to prevent unnecessary re-fetches
+  const competitorsKey = useMemo(() =>
+    selectedCompetitors.length > 0 ? selectedCompetitors.sort().join(',') : 'all',
+    [selectedCompetitors]
+  )
+
   useEffect(() => {
     fetchCompetitorData()
-  }, [platform, dateFilter, selectedCompetitors])
+  }, [platform, dateFilter, competitorsKey])
 
   const fetchCompetitorData = async () => {
     setIsLoading(true)
@@ -32,7 +38,7 @@ export function PlatformCompetitorComparison({ platform, dateFilter = 'all', sel
       const params = new URLSearchParams({
         platform: platform,
         date: dateFilter,
-        competitors: selectedCompetitors.length > 0 ? selectedCompetitors.join(',') : 'all'
+        competitors: competitorsKey
       })
 
       const response = await fetch(`/api/analytics/platform-competitive?${params}`)
@@ -164,3 +170,6 @@ export function PlatformCompetitorComparison({ platform, dateFilter = 'all', sel
     </Card>
   )
 }
+
+// Export memoized component to prevent unnecessary re-renders
+export const PlatformCompetitorComparison = memo(PlatformCompetitorComparisonComponent)
