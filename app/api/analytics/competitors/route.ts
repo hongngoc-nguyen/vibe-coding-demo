@@ -105,8 +105,8 @@ export async function GET(request: NextRequest) {
 
     const availableDates = [...new Set(availableDatesData?.map(d => d.response_date.split('T')[0]) || [])]
 
-    // Get available platforms from filtered citations only
-    const availablePlatforms = [...new Set(filteredCitations?.map(c => c.platform) || [])]
+    // Get available platforms from ALL competitor citations (not just filtered ones)
+    const availablePlatforms = [...new Set(allCompetitorCitations?.map(c => c.platform) || [])]
 
     // Get all competitor names for the filter dropdown
     const { data: allCompetitors } = await supabase
