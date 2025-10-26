@@ -172,7 +172,11 @@ export function CompetitiveAnalysis() {
       </Card>
 
       {/* Anduin vs. Competitors Chart */}
-      <PlatformCompetitorComparison platform={platformFilter} dateFilter={dateFilter} />
+      <PlatformCompetitorComparison
+        platform={platformFilter}
+        dateFilter={dateFilter}
+        selectedCompetitors={selectedCompetitors}
+      />
 
       {/* Competitor Citation Sources Table */}
       <Card>

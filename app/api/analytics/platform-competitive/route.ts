@@ -24,12 +24,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const platform = searchParams.get('platform') || 'all'
     const dateFilter = searchParams.get('date') || 'all'
+    const competitorsParam = searchParams.get('competitors') || 'all'
+
+    // Parse competitors (can be comma-separated for multiple selections)
+    const selectedCompetitors = competitorsParam === 'all'
+      ? []
+      : competitorsParam.split(',').filter(Boolean)
 
     // Step 1: Get brand and competitor entity IDs with their names
-    const { data: entities } = await supabase
+    let entitiesQuery = supabase
       .from('entities')
       .select('entity_id, canonical_name, entity_type')
       .in('entity_type', ['brand', 'competitor'])
+
+    // Filter by specific competitors if selected (but always include brand)
+    if (selectedCompetitors.length > 0) {
+      entitiesQuery = entitiesQuery.or(`entity_type.eq.brand,canonical_name.in.(${selectedCompetitors.join(',')})`)
+    }
+
+    const { data: entities } = await entitiesQuery
 
     const entityIds = entities?.map(e => e.entity_id) || []
     const entityMap = new Map(entities?.map(e => [e.entity_id, e.canonical_name]) || [])

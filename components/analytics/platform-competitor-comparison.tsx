@@ -14,23 +14,25 @@ interface CompetitiveData {
 interface PlatformCompetitorComparisonProps {
   platform: string
   dateFilter?: string
+  selectedCompetitors?: string[]
 }
 
-export function PlatformCompetitorComparison({ platform, dateFilter = 'all' }: PlatformCompetitorComparisonProps) {
+export function PlatformCompetitorComparison({ platform, dateFilter = 'all', selectedCompetitors = [] }: PlatformCompetitorComparisonProps) {
   const [data, setData] = useState<CompetitiveData[]>([])
   const [entities, setEntities] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchCompetitorData()
-  }, [platform, dateFilter])
+  }, [platform, dateFilter, selectedCompetitors])
 
   const fetchCompetitorData = async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
         platform: platform,
-        date: dateFilter
+        date: dateFilter,
+        competitors: selectedCompetitors.length > 0 ? selectedCompetitors.join(',') : 'all'
       })
 
       const response = await fetch(`/api/analytics/platform-competitive?${params}`)
