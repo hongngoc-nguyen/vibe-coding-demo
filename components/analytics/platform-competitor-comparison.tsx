@@ -103,8 +103,7 @@ export function PlatformCompetitorComparison({ platform, dateFilter = 'all' }: P
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Anduin vs. Competitors</CardTitle>
-          <CardDescription>Citation comparison on {platform}</CardDescription>
+          <CardTitle>Appearance ranking - Anduin vs Competitors</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
@@ -119,8 +118,7 @@ export function PlatformCompetitorComparison({ platform, dateFilter = 'all' }: P
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-brand-navy">Anduin vs. Competitors</CardTitle>
-          <CardDescription>Citation comparison on {platform}</CardDescription>
+          <CardTitle className="text-brand-navy">Appearance ranking - Anduin vs Competitors</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center text-gray-500">
@@ -134,10 +132,7 @@ export function PlatformCompetitorComparison({ platform, dateFilter = 'all' }: P
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-brand-navy">Anduin vs. Competitors</CardTitle>
-        <CardDescription>
-          Citation comparison on {platform}
-        </CardDescription>
+        <CardTitle className="text-brand-navy">Appearance ranking - Anduin vs Competitors</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
