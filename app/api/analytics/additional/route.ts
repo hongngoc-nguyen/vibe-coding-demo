@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .select('entity_id')
       .eq('entity_type', 'other')
 
-    const otherEntityIds = otherEntities?.map(e => e.entity_id) || []
+    const otherEntityIds = (otherEntities as Array<{ entity_id: string }> | null)?.map(e => e.entity_id) || []
 
     if (otherEntityIds.length === 0) {
       return NextResponse.json({
@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
     const { data: allOtherCitations } = await supabase
       .from('citation_listing')
       .select('url, response_id, platform, entity_id')
-      .in('entity_id', otherEntityIds)
+      .in('entity_id', otherEntityIds) as { data: Array<{ url: string; response_id: string; platform: string; entity_id: string }> | null }
 
     // Get responses for date filtering
-    let responsesForFiltering
+    let responsesForFiltering: Array<{ response_id: string; response_date: string }>
     if (dateFilter !== 'all') {
       // Get responses for specific date range
       const { data: specificDateResponses } = await supabase
@@ -49,14 +49,14 @@ export async function GET(request: NextRequest) {
         .gte('response_date', dateFilter)
         .lt('response_date', getNextDay(dateFilter))
 
-      responsesForFiltering = specificDateResponses || []
+      responsesForFiltering = (specificDateResponses as Array<{ response_id: string; response_date: string }> | null) || []
     } else {
       // Get all responses
       const { data: allResponses } = await supabase
         .from('responses')
         .select('response_id, response_date')
 
-      responsesForFiltering = allResponses || []
+      responsesForFiltering = (allResponses as Array<{ response_id: string; response_date: string }> | null) || []
     }
 
     const filterResponseIds = new Set(responsesForFiltering.map(r => r.response_id))
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       .select('entity_id, canonical_name')
       .in('entity_id', otherEntityIds)
 
-    const entityMap = new Map(entitiesData?.map(e => [e.entity_id, e.canonical_name]) || [])
+    const entityMap = new Map((entitiesData as Array<{ entity_id: string; canonical_name: string }> | null)?.map(e => [e.entity_id, e.canonical_name]) || [])
 
     const citations = processCitations(citationsData || [], entityMap)
     const topEntities = processTopEntities(filteredCitations || [], entityMap)
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       .select('response_date')
       .order('response_date', { ascending: false })
 
-    const availableDates = [...new Set(availableDatesData?.map(d => d.response_date.split('T')[0]) || [])]
+    const availableDates = [...new Set((availableDatesData as Array<{ response_date: string }> | null)?.map(d => d.response_date.split('T')[0]) || [])]
 
     // Get available platforms from filtered citations only
     const availablePlatforms = [...new Set(filteredCitations?.map(c => c.platform) || [])]

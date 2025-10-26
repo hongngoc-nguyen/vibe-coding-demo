@@ -7,11 +7,15 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { UrlPreview } from './url-preview'
 import { PlatformCompetitorComparison } from './platform-competitor-comparison'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function CompetitiveAnalysis() {
   const [dateFilter, setDateFilter] = useState('all')
   const [platformFilter, setPlatformFilter] = useState('all')
-  const [competitorFilter, setCompetitorFilter] = useState('all')
+  const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>([])
   const [data, setData] = useState<any>({
     citations: [],
     availableDates: [],
@@ -22,7 +26,7 @@ export function CompetitiveAnalysis() {
 
   useEffect(() => {
     fetchCompetitiveData()
-  }, [dateFilter, platformFilter, competitorFilter])
+  }, [dateFilter, platformFilter, selectedCompetitors])
 
   const fetchCompetitiveData = async () => {
     setIsLoading(true)
@@ -30,7 +34,7 @@ export function CompetitiveAnalysis() {
       const params = new URLSearchParams({
         date: dateFilter,
         platform: platformFilter,
-        competitor: competitorFilter
+        competitors: selectedCompetitors.length > 0 ? selectedCompetitors.join(',') : 'all'
       })
 
       const response = await fetch(`/api/analytics/competitors?${params}`)
@@ -47,6 +51,18 @@ export function CompetitiveAnalysis() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const toggleCompetitor = (competitor: string) => {
+    setSelectedCompetitors(prev =>
+      prev.includes(competitor)
+        ? prev.filter(c => c !== competitor)
+        : [...prev, competitor]
+    )
+  }
+
+  const clearCompetitors = () => {
+    setSelectedCompetitors([])
   }
 
   if (isLoading) {
@@ -100,17 +116,56 @@ export function CompetitiveAnalysis() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Filter by Competitor</label>
-              <Select value={competitorFilter} onValueChange={setCompetitorFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Competitors</SelectItem>
-                  {data.availableCompetitors.map((competitor: string) => (
-                    <SelectItem key={competitor} value={competitor}>{competitor}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {selectedCompetitors.length === 0
+                      ? "All Competitors"
+                      : `${selectedCompetitors.length} selected`}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <div className="max-h-[300px] overflow-auto p-2">
+                    {selectedCompetitors.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start mb-2"
+                        onClick={clearCompetitors}
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                    {data.availableCompetitors.map((competitor: string) => (
+                      <div
+                        key={competitor}
+                        className={cn(
+                          "flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded-sm",
+                          selectedCompetitors.includes(competitor) && "bg-accent"
+                        )}
+                        onClick={() => toggleCompetitor(competitor)}
+                      >
+                        <div className={cn(
+                          "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                          selectedCompetitors.includes(competitor)
+                            ? "bg-primary text-primary-foreground"
+                            : "opacity-50"
+                        )}>
+                          {selectedCompetitors.includes(competitor) && (
+                            <Check className="h-3 w-3" />
+                          )}
+                        </div>
+                        <span className="text-sm">{competitor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardContent>

@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const dateFilter = searchParams.get('date') || 'all'
     const platformFilter = searchParams.get('platform') || 'all'
-    const competitorFilter = searchParams.get('competitor') || 'all'
+    const competitorsParam = searchParams.get('competitors') || 'all'
+
+    // Parse competitors (can be comma-separated for multiple selections)
+    const selectedCompetitors = competitorsParam === 'all'
+      ? []
+      : competitorsParam.split(',').filter(Boolean)
 
     // Get competitor entity IDs
     let competitorQuery = supabase
@@ -22,9 +27,9 @@ export async function GET(request: NextRequest) {
       .select('entity_id, canonical_name')
       .eq('entity_type', 'competitor')
 
-    // Filter by specific competitor if selected
-    if (competitorFilter !== 'all') {
-      competitorQuery = competitorQuery.eq('canonical_name', competitorFilter)
+    // Filter by specific competitors if selected
+    if (selectedCompetitors.length > 0) {
+      competitorQuery = competitorQuery.in('canonical_name', selectedCompetitors)
     }
 
     const { data: competitorEntities } = await competitorQuery

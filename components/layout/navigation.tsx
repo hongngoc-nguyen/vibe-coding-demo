@@ -49,15 +49,20 @@ export function Navigation({ user, userRole }: NavigationProps) {
     }, 200) // 200ms delay before closing
   }
 
-  const isAnalyticsActive = pathname.startsWith('/analytics')
+  const isPlatformBreakdownActive = pathname.startsWith('/platform-breakdown')
 
-  const analyticsSubItems = [
-    { href: '/analytics/entity', label: 'Entity' },
-    { href: '/analytics/platform', label: 'Platform' },
+  const platformBreakdownSubItems = [
+    { href: '/platform-breakdown/google-search', label: 'Google Search' },
+    { href: '/platform-breakdown/google-ai-mode', label: 'Google AI Mode' },
   ]
 
   const navItems = [
     { href: '/dashboard', label: 'Overview', icon: Home },
+  ]
+
+  const analysisItems = [
+    { href: '/competitor-analysis', label: 'Competitor Analysis', icon: Users },
+    { href: '/industry-analysis', label: 'Industry Analysis', icon: BarChart3 },
   ]
 
   if (userRole === 'admin') {
@@ -92,7 +97,7 @@ export function Navigation({ user, userRole }: NavigationProps) {
                 )
               })}
 
-              {/* Analytics Dropdown */}
+              {/* Platform Breakdown Dropdown */}
               <div
                 className="relative"
                 onMouseEnter={handleMouseEnter}
@@ -100,19 +105,19 @@ export function Navigation({ user, userRole }: NavigationProps) {
               >
                 <button
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isAnalyticsActive
+                    isPlatformBreakdownActive
                       ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   <BarChart3 className="h-4 w-4" />
-                  <span>Analytics</span>
+                  <span>Platform Breakdown</span>
                   <ChevronDown className={`h-3 w-3 transition-transform ${showAnalyticsDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showAnalyticsDropdown && (
                   <div className="absolute top-full left-0 mt-0.5 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                    {analyticsSubItems.map((subItem) => (
+                    {platformBreakdownSubItems.map((subItem) => (
                       <Link
                         key={subItem.href}
                         href={subItem.href}
@@ -128,6 +133,25 @@ export function Navigation({ user, userRole }: NavigationProps) {
                   </div>
                 )}
               </div>
+
+              {/* Analysis Items */}
+              {analysisItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      pathname === item.href
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
             </div>
           </div>
           <DropdownMenu>
