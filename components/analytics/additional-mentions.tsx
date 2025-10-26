@@ -136,8 +136,8 @@ export function AdditionalMentions() {
       {/* Top Cited Entities Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Top Cited Entities</CardTitle>
-          <CardDescription>Top 10 additional mentions ranked by total citation count</CardDescription>
+          <CardTitle>Top Cited Web Pages in the Industry</CardTitle>
+          <CardDescription>Top 10 web pages ranked by citation count from responses excluding Brand and Competitors</CardDescription>
         </CardHeader>
         <CardContent>
           {data.topEntities.length > 0 ? (
