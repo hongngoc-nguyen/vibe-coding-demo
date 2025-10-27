@@ -347,7 +347,7 @@ function processUniqueCitationChart(allResponses: any[], brandResponses: any[]) 
     .map(([date, data]) => ({
       date,
       brandCitations: data.withBrand.size,
-      totalResponses: data.total.size
+      responsesWithoutBrand: data.total.size - data.withBrand.size
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 }

@@ -222,7 +222,7 @@ export function BrandInsights() {
                   <YAxis className="text-xs" />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="brandCitations" stackId="a" fill={BRAND_COLOR} name="With Brand Citations" />
-                  <Bar dataKey="totalResponses" stackId="a" fill={NEUTRAL_COLOR} name="Without Brand Citations" />
+                  <Bar dataKey="responsesWithoutBrand" stackId="a" fill={NEUTRAL_COLOR} name="Without Brand Citations" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
