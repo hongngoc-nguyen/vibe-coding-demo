@@ -52,16 +52,35 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all responses in date range for filtering
-    const { data: currentPeriodResponses } = await supabase
-      .from('responses')
-      .select('response_id, response_date')
-      .gte('response_date', startDate.toISOString())
+    // When dateFilter is 'all', get ALL responses for metrics, otherwise use 30-day window
+    let currentPeriodResponses = []
+    let previousPeriodResponses = []
 
-    const { data: previousPeriodResponses } = await supabase
-      .from('responses')
-      .select('response_id, response_date')
-      .gte('response_date', previousStartDate.toISOString())
-      .lt('response_date', startDate.toISOString())
+    if (dateFilter === 'all') {
+      // Get ALL responses for metrics when showing all data
+      const { data: allResponsesData } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+
+      currentPeriodResponses = allResponsesData || []
+      // For growth rate when showing all data, compare to empty previous period
+      previousPeriodResponses = []
+    } else {
+      // Use 30-day rolling window for metrics when filtering by specific date
+      const { data: currentData } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+        .gte('response_date', startDate.toISOString())
+
+      const { data: previousData } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+        .gte('response_date', previousStartDate.toISOString())
+        .lt('response_date', startDate.toISOString())
+
+      currentPeriodResponses = currentData || []
+      previousPeriodResponses = previousData || []
+    }
 
     const currentPeriodResponseIds = new Set(currentPeriodResponses?.map(r => r.response_id) || [])
     const previousPeriodResponseIds = new Set(previousPeriodResponses?.map(r => r.response_id) || [])
@@ -242,9 +261,16 @@ export async function GET(request: NextRequest) {
     const { data: allCitationsForTable } = await citationsForTableQuery
 
     // Get responses for date filtering
-    let responsesForFiltering = currentPeriodResponses || []
+    let responsesForFiltering = []
 
-    if (dateFilter !== 'all') {
+    if (dateFilter === 'all') {
+      // Get ALL responses when dateFilter is 'all'
+      const { data: allResponsesForTable } = await supabase
+        .from('responses')
+        .select('response_id, response_date')
+
+      responsesForFiltering = allResponsesForTable || []
+    } else {
       // Get responses for specific date
       const { data: specificDateResponses } = await supabase
         .from('responses')
