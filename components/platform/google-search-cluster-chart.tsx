@@ -62,7 +62,7 @@ export function GoogleSearchClusterChart({ data = [] }: GoogleSearchClusterChart
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-brand-navy">Anduin GG Search Citation Over Time</CardTitle>
+        <CardTitle className="text-brand-navy">Anduin Total Citations Over Time by Clusters</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>

@@ -52,7 +52,7 @@ export function GoogleSearchTrendChart({ data: rawData = [] }: GoogleSearchTrend
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-brand-navy">Anduin GG Search Appearance Over Time</CardTitle>
+        <CardTitle className="text-brand-navy">Anduin Appearance Over Time</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>

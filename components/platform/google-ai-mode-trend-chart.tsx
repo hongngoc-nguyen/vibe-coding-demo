@@ -52,7 +52,7 @@ export function GoogleAIModeTrendChart({ data: rawData = [] }: GoogleAIModeTrend
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-brand-navy">Anduin GG AI Mode Appearance Over Time</CardTitle>
+        <CardTitle className="text-brand-navy">Anduin Appearance Over Time</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
