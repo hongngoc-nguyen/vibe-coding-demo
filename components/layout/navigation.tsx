@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Home, BarChart3, Users, LogOut, ChevronDown } from 'lucide-react'
+import { Home, BarChart3, Users, LogOut, ChevronDown, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface NavigationProps {
@@ -58,6 +58,7 @@ export function Navigation({ user, userRole }: NavigationProps) {
 
   const navItems = [
     { href: '/dashboard', label: 'Overview', icon: Home },
+    { href: '/search-assistant', label: 'Search Assistant', icon: Search },
   ]
 
   const analysisItems = [

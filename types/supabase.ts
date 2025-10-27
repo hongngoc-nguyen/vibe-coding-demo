@@ -201,6 +201,64 @@ export type Database = {
           created_at?: string
         }
       }
+      user_search_queries: {
+        Row: {
+          query_id: string
+          user_id: string
+          prompt_text: string
+          query_status: 'pending' | 'processing' | 'completed' | 'failed'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          query_id?: string
+          user_id: string
+          prompt_text: string
+          query_status?: 'pending' | 'processing' | 'completed' | 'failed'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          query_id?: string
+          user_id?: string
+          prompt_text?: string
+          query_status?: 'pending' | 'processing' | 'completed' | 'failed'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      search_responses: {
+        Row: {
+          response_id: string
+          query_id: string
+          source_type: 'google_search' | 'google_ai_mode'
+          response_data: any
+          response_status: 'success' | 'failed'
+          execution_time: number | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          response_id?: string
+          query_id: string
+          source_type: 'google_search' | 'google_ai_mode'
+          response_data: any
+          response_status?: 'success' | 'failed'
+          execution_time?: number | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          response_id?: string
+          query_id?: string
+          source_type?: 'google_search' | 'google_ai_mode'
+          response_data?: any
+          response_status?: 'success' | 'failed'
+          execution_time?: number | null
+          error_message?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       brand_performance: {

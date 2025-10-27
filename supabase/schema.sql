@@ -176,3 +176,106 @@ INSERT INTO public.competitors (competitor_name, industry_category) VALUES
   ('Clio', 'Legal Tech'),
   ('LawPay', 'Legal Tech'),
   ('MyCase', 'Legal Tech');
+
+-- ============================================
+-- SEARCH ASSISTANT FEATURE
+-- ============================================
+
+-- Create user_search_queries table
+CREATE TABLE IF NOT EXISTS public.user_search_queries (
+  query_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id TEXT NOT NULL,
+  prompt_text TEXT NOT NULL,
+  query_status TEXT DEFAULT 'pending' CHECK (query_status IN ('pending', 'processing', 'completed', 'failed')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes for user_search_queries
+CREATE INDEX IF NOT EXISTS idx_user_search_queries_user_id ON public.user_search_queries(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_search_queries_created_at ON public.user_search_queries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_search_queries_status ON public.user_search_queries(query_status);
+
+-- Create search_responses table
+CREATE TABLE IF NOT EXISTS public.search_responses (
+  response_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  query_id UUID NOT NULL REFERENCES public.user_search_queries(query_id) ON DELETE CASCADE,
+  source_type TEXT NOT NULL CHECK (source_type IN ('google_search', 'google_ai_mode')),
+  response_data JSONB NOT NULL,
+  response_status TEXT DEFAULT 'success' CHECK (response_status IN ('success', 'failed')),
+  execution_time INTEGER,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes for search_responses
+CREATE INDEX IF NOT EXISTS idx_search_responses_query_id ON public.search_responses(query_id);
+CREATE INDEX IF NOT EXISTS idx_search_responses_source_type ON public.search_responses(source_type);
+CREATE INDEX IF NOT EXISTS idx_search_responses_created_at ON public.search_responses(created_at DESC);
+
+-- Helper function for updating timestamps
+CREATE OR REPLACE FUNCTION public.update_search_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for auto-updating updated_at
+DROP TRIGGER IF EXISTS update_user_search_queries_updated_at ON public.user_search_queries;
+CREATE TRIGGER update_user_search_queries_updated_at
+  BEFORE UPDATE ON public.user_search_queries
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_search_updated_at_column();
+
+-- Enable RLS for search tables
+ALTER TABLE public.user_search_queries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.search_responses ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for user_search_queries
+CREATE POLICY "Service role full access to search queries"
+  ON public.user_search_queries
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Users can view own search queries"
+  ON public.user_search_queries
+  FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid()::text);
+
+CREATE POLICY "Users can insert own search queries"
+  ON public.user_search_queries
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid()::text);
+
+CREATE POLICY "Users can update own search queries"
+  ON public.user_search_queries
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid()::text)
+  WITH CHECK (user_id = auth.uid()::text);
+
+-- RLS Policies for search_responses
+CREATE POLICY "Service role full access to search responses"
+  ON public.search_responses
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Users can view own search responses"
+  ON public.search_responses
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.user_search_queries
+      WHERE user_search_queries.query_id = search_responses.query_id
+      AND user_search_queries.user_id = auth.uid()::text
+    )
+  );
