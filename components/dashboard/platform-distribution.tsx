@@ -105,7 +105,7 @@ export function PlatformDistribution() {
               visiblePlatforms.has(platform) && (
                 <Line
                   key={platform}
-                  type="monotone"
+                  type="linear"
                   dataKey={platform}
                   stroke={platformColors[idx % platformColors.length]}
                   name={platform}

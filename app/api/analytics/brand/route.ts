@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all responses in date range for filtering
-    // When dateFilter is 'all', get ALL responses for metrics, otherwise use 30-day window
+    // When dateFilter is 'all', get ALL responses for metrics
+    // When dateFilter is a specific date, get only responses for that date
     let currentPeriodResponses = []
     let previousPeriodResponses = []
 
@@ -66,20 +67,39 @@ export async function GET(request: NextRequest) {
       // For growth rate when showing all data, compare to empty previous period
       previousPeriodResponses = []
     } else {
-      // Use 30-day rolling window for metrics when filtering by specific date
+      // Get responses for the specific selected date only
       const { data: currentData } = await supabase
         .from('responses')
         .select('response_id, response_date')
-        .gte('response_date', startDate.toISOString())
-
-      const { data: previousData } = await supabase
-        .from('responses')
-        .select('response_id, response_date')
-        .gte('response_date', previousStartDate.toISOString())
-        .lt('response_date', startDate.toISOString())
+        .gte('response_date', dateFilter)
+        .lt('response_date', getNextDay(dateFilter))
 
       currentPeriodResponses = currentData || []
-      previousPeriodResponses = previousData || []
+
+      // Find the previous date that has data (from available dates)
+      // Get all unique dates with responses before the selected date
+      const { data: previousDatesData } = await supabase
+        .from('responses')
+        .select('response_date')
+        .lt('response_date', dateFilter)
+        .order('response_date', { ascending: false })
+        .limit(1)
+
+      if (previousDatesData && previousDatesData.length > 0) {
+        const previousDate = previousDatesData[0].response_date.split('T')[0]
+
+        // Get responses from the previous available date for comparison
+        const { data: previousData } = await supabase
+          .from('responses')
+          .select('response_id, response_date')
+          .gte('response_date', previousDate)
+          .lt('response_date', getNextDay(previousDate))
+
+        previousPeriodResponses = previousData || []
+      } else {
+        // No previous date available
+        previousPeriodResponses = []
+      }
     }
 
     const currentPeriodResponseIds = new Set(currentPeriodResponses?.map(r => r.response_id) || [])

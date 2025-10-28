@@ -78,7 +78,7 @@ export function GoogleAIModeClusterChart({ data = [] }: GoogleAIModeClusterChart
             {clusters.map((cluster, index) => (
               <Area
                 key={cluster}
-                type="monotone"
+                type="linear"
                 dataKey={cluster}
                 stackId="1"
                 stroke={CHART_COLORS[index % CHART_COLORS.length]}

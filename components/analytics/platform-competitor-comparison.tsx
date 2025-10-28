@@ -156,7 +156,7 @@ function PlatformCompetitorComparisonComponent({ platform, dateFilter = 'all', s
             {entities.map((entity, index) => (
               <Line
                 key={entity}
-                type="monotone"
+                type="linear"
                 dataKey={entity}
                 stroke={CHART_COLORS[index % CHART_COLORS.length]}
                 strokeWidth={entity === 'Anduin' ? 3 : 2}

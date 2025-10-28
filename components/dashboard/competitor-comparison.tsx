@@ -135,7 +135,7 @@ export function CompetitorComparison() {
             {entities.map((entity, index) => (
               <Line
                 key={entity}
-                type="monotone"
+                type="linear"
                 dataKey={entity}
                 stroke={ENTITY_COLORS[index % ENTITY_COLORS.length]}
                 strokeWidth={entity === 'Anduin' ? 3 : 2}

@@ -66,7 +66,7 @@ export function GoogleSearchTrendChart({ data: rawData = [] }: GoogleSearchTrend
             <YAxis className="text-xs" />
             <Tooltip content={<CustomTooltip />} />
             <Line
-              type="monotone"
+              type="linear"
               dataKey="citations"
               stroke={BRAND_COLOR}
               strokeWidth={2}
