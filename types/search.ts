@@ -123,6 +123,6 @@ export interface N8NWebhookResponse {
   response_id: string // The pre-generated UUID sent in payload
   source_type: SourceType
   response_data: string // n8n returns pre-formatted text
-  execution_time: number
+  execution_time?: number // Optional
   error?: string
 }
