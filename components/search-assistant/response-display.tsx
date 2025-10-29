@@ -99,19 +99,11 @@ export function ResponseDisplay({
                   {googleSearchResponse.error_message || 'Failed to fetch search results'}
                 </AlertDescription>
               </Alert>
-            ) : googleSearchResponse?.response_data?.results?.length > 0 ? (
-              <div className="space-y-3">
-                {googleSearchResponse.response_data.results.map((result: any, index: number) => (
-                  <SearchResultCard key={index} result={result} />
-                ))}
-                {googleSearchResponse.response_data.searchInformation && (
-                  <div className="pt-4 border-t">
-                    <p className="text-xs text-gray-500">
-                      About {googleSearchResponse.response_data.searchInformation.totalResults} results
-                      {' '}({googleSearchResponse.response_data.searchInformation.searchTime}s)
-                    </p>
-                  </div>
-                )}
+            ) : googleSearchResponse?.response_data ? (
+              <div className="prose prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
+                  {googleSearchResponse.response_data}
+                </pre>
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-8">
@@ -141,12 +133,22 @@ export function ResponseDisplay({
               </Alert>
             </CardContent>
           </Card>
-        ) : googleAIModeResponse?.response_data?.answer ? (
-          <AIResponseCard
-            answer={googleAIModeResponse.response_data.answer}
-            sources={googleAIModeResponse.response_data.sources}
-            confidence={googleAIModeResponse.response_data.confidence}
-          />
+        ) : googleAIModeResponse?.response_data ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                AI Response
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
+                  {googleAIModeResponse.response_data}
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card>
             <CardHeader>

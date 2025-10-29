@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/supabase'
-import { callBothWorkflows } from '@/lib/n8n'
+import { callGoogleSearchWorkflow, callGoogleAIModeWorkflow } from '@/lib/n8n'
 import { SubmitSearchRequest, SubmitSearchResponse } from '@/types/search'
+import crypto from 'crypto'
 
 // Create Supabase client with service role
 const supabase = createClient<Database>(
@@ -66,14 +67,45 @@ export async function POST(request: NextRequest) {
       .update({ query_status: 'processing' })
       .eq('query_id', query.query_id)
 
-    // Step 3: Call both n8n workflows in parallel
-    const { googleSearch, googleAIMode, errors } = await callBothWorkflows({
-      query_id: query.query_id,
-      user_id: userId,
-      prompt_text: prompt_text.trim()
-    })
+    // Step 3: Pre-generate response_id UUIDs
+    const googleSearchResponseId = crypto.randomUUID()
+    const googleAIModeResponseId = crypto.randomUUID()
 
-    // Step 4: Store responses in database
+    // Step 4: Call both n8n workflows in parallel with pre-generated response_ids
+    const [searchResult, aiResult] = await Promise.allSettled([
+      callGoogleSearchWorkflow({
+        query_id: query.query_id,
+        user_id: userId,
+        prompt_text: prompt_text.trim(),
+        response_id: googleSearchResponseId
+      }),
+      callGoogleAIModeWorkflow({
+        query_id: query.query_id,
+        user_id: userId,
+        prompt_text: prompt_text.trim(),
+        response_id: googleAIModeResponseId
+      })
+    ])
+
+    const errors: { googleSearch?: string; googleAIMode?: string } = {}
+
+    const googleSearch = searchResult.status === 'fulfilled'
+      ? searchResult.value
+      : null
+
+    const googleAIMode = aiResult.status === 'fulfilled'
+      ? aiResult.value
+      : null
+
+    if (searchResult.status === 'rejected') {
+      errors.googleSearch = searchResult.reason?.message || 'Unknown error'
+    }
+
+    if (aiResult.status === 'rejected') {
+      errors.googleAIMode = aiResult.reason?.message || 'Unknown error'
+    }
+
+    // Step 5: Store responses in database using pre-generated response_ids
     const responseInserts = []
 
     if (googleSearch && googleSearch.success) {
@@ -81,6 +113,7 @@ export async function POST(request: NextRequest) {
         supabase
           .from('search_responses')
           .insert({
+            response_id: googleSearchResponseId, // Use pre-generated UUID
             query_id: query.query_id,
             source_type: 'google_search',
             response_data: googleSearch.response_data,
@@ -95,9 +128,10 @@ export async function POST(request: NextRequest) {
         supabase
           .from('search_responses')
           .insert({
+            response_id: googleSearchResponseId, // Use pre-generated UUID
             query_id: query.query_id,
             source_type: 'google_search',
-            response_data: {},
+            response_data: '',
             response_status: 'failed',
             error_message: errors.googleSearch
           })
@@ -111,6 +145,7 @@ export async function POST(request: NextRequest) {
         supabase
           .from('search_responses')
           .insert({
+            response_id: googleAIModeResponseId, // Use pre-generated UUID
             query_id: query.query_id,
             source_type: 'google_ai_mode',
             response_data: googleAIMode.response_data,
@@ -125,9 +160,10 @@ export async function POST(request: NextRequest) {
         supabase
           .from('search_responses')
           .insert({
+            response_id: googleAIModeResponseId, // Use pre-generated UUID
             query_id: query.query_id,
             source_type: 'google_ai_mode',
-            response_data: {},
+            response_data: '',
             response_status: 'failed',
             error_message: errors.googleAIMode
           })
@@ -139,14 +175,14 @@ export async function POST(request: NextRequest) {
     // Wait for all responses to be stored
     const responseResults = await Promise.allSettled(responseInserts)
 
-    // Step 5: Update query status
+    // Step 6: Update query status
     const finalStatus = Object.keys(errors).length > 0 ? 'failed' : 'completed'
     await supabase
       .from('user_search_queries')
       .update({ query_status: finalStatus })
       .eq('query_id', query.query_id)
 
-    // Step 6: Fetch the complete query with responses
+    // Step 7: Fetch the complete query with responses
     const { data: completeQuery, error: fetchError } = await supabase
       .from('user_search_queries')
       .select(`

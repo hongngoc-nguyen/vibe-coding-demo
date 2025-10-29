@@ -149,31 +149,35 @@ function mockGoogleAIModeResponse(payload: N8NWebhookPayload): N8NWebhookRespons
   // Simulate network delay
   return new Promise((resolve) => {
     setTimeout(() => {
+      const formattedResponse = `AI-Generated Answer for: "${payload.prompt_text}"
+
+This is a mock AI-generated answer. In a real scenario, this would contain comprehensive information from Google's AI Mode, synthesizing multiple sources to provide a detailed, accurate response to your question.
+
+The answer would be contextual, well-structured, and backed by reliable sources, providing insights that help you make informed decisions.
+
+Sources:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Example Source 1 - Authoritative Guide
+   https://example.com/guide
+   Comprehensive information about legal software solutions and best practices.
+
+2. Example Source 2 - Industry Analysis
+   https://example.com/analysis
+   Market research and comparison of leading tools in the industry.
+
+3. Example Source 3 - User Reviews
+   https://example.com/reviews
+   Real user experiences and ratings from verified customers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Confidence Score: 92%`
+
       resolve({
         success: true,
         query_id: payload.query_id,
+        response_id: payload.response_id, // Return the pre-generated response_id
         source_type: 'google_ai_mode',
-        response_data: {
-          answer: `This is a mock AI-generated answer for the query: "${payload.prompt_text}". In a real scenario, this would contain comprehensive information from Google's AI Mode, synthesizing multiple sources to provide a detailed, accurate response to your question. The answer would be contextual, well-structured, and backed by reliable sources.`,
-          sources: [
-            {
-              title: 'Example Source 1 - Authoritative Guide',
-              url: 'https://example.com/guide',
-              snippet: 'Comprehensive information about legal software solutions...'
-            },
-            {
-              title: 'Example Source 2 - Industry Analysis',
-              url: 'https://example.com/analysis',
-              snippet: 'Market research and comparison of leading tools...'
-            },
-            {
-              title: 'Example Source 3 - User Reviews',
-              url: 'https://example.com/reviews',
-              snippet: 'Real user experiences and ratings...'
-            }
-          ],
-          confidence: 0.92
-        },
+        response_data: formattedResponse,
         execution_time: Math.floor(Math.random() * 2000) + 800
       })
     }, 1500) // Simulate 1.5s delay
@@ -184,48 +188,60 @@ function mockGoogleSearchResponse(payload: N8NWebhookPayload): N8NWebhookRespons
   // Simulate network delay
   return new Promise((resolve) => {
     setTimeout(() => {
+      const formattedResponse = `Google Search Results for: "${payload.prompt_text}"
+
+═══════════════════════════════════════════════════════════════════════════
+
+Result #1
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: Best Legal Software for Small Firms - 2025 Guide
+URL: https://example.com/legal-software-guide
+
+Comprehensive guide to choosing legal practice management software. Compare
+features, pricing, and user reviews of top solutions including Clio, MyCase,
+and more.
+
+Result #2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: Top 10 Legal Practice Management Software
+URL: https://example.com/top-10-legal-software
+
+Discover the best legal software solutions for attorneys and law firms. Read
+expert reviews and comparisons to find the perfect fit for your practice.
+
+Result #3
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: Legal Tech Reviews | Attorney Software Comparison
+URL: https://example.com/legal-tech-reviews
+
+In-depth reviews of legal technology platforms. Compare case management,
+billing, document automation, and client portal features.
+
+Result #4
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: Clio vs MyCase vs PracticePanther Comparison
+URL: https://example.com/software-comparison
+
+Side-by-side comparison of leading legal practice management platforms. See
+pricing, features, integrations, and user ratings.
+
+Result #5
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: How to Choose Legal Software for Your Firm
+URL: https://example.com/how-to-choose
+
+Step-by-step guide to evaluating and selecting legal practice management
+software. Learn what features matter most for small to mid-size firms.
+
+═══════════════════════════════════════════════════════════════════════════
+About 1,250,000 results (0.42 seconds)`
+
       resolve({
         success: true,
         query_id: payload.query_id,
+        response_id: payload.response_id, // Return the pre-generated response_id
         source_type: 'google_search',
-        response_data: {
-          results: [
-            {
-              title: 'Best Legal Software for Small Firms - 2025 Guide',
-              link: 'https://example.com/legal-software-guide',
-              snippet: 'Comprehensive guide to choosing legal practice management software. Compare features, pricing, and user reviews of top solutions including Clio, MyCase, and more.',
-              position: 1
-            },
-            {
-              title: 'Top 10 Legal Practice Management Software',
-              link: 'https://example.com/top-10-legal-software',
-              snippet: 'Discover the best legal software solutions for attorneys and law firms. Read expert reviews and comparisons to find the perfect fit for your practice.',
-              position: 2
-            },
-            {
-              title: 'Legal Tech Reviews | Attorney Software Comparison',
-              link: 'https://example.com/legal-tech-reviews',
-              snippet: 'In-depth reviews of legal technology platforms. Compare case management, billing, document automation, and client portal features.',
-              position: 3
-            },
-            {
-              title: 'Clio vs MyCase vs PracticePanther Comparison',
-              link: 'https://example.com/software-comparison',
-              snippet: 'Side-by-side comparison of leading legal practice management platforms. See pricing, features, integrations, and user ratings.',
-              position: 4
-            },
-            {
-              title: 'How to Choose Legal Software for Your Firm',
-              link: 'https://example.com/how-to-choose',
-              snippet: 'Step-by-step guide to evaluating and selecting legal practice management software. Learn what features matter most for small to mid-size firms.',
-              position: 5
-            }
-          ],
-          searchInformation: {
-            totalResults: '1,250,000',
-            searchTime: 0.42
-          }
-        },
+        response_data: formattedResponse,
         execution_time: Math.floor(Math.random() * 1500) + 500
       })
     }, 1200) // Simulate 1.2s delay

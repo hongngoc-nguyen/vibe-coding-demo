@@ -23,7 +23,7 @@ export interface SearchResponse {
   response_id: string
   query_id: string
   source_type: SourceType
-  response_data: GoogleSearchData | GoogleAIModeData | any
+  response_data: string // Changed from JSONB to TEXT - stores formatted response
   response_status: ResponseStatus
   execution_time: number | null
   error_message: string | null
@@ -114,13 +114,15 @@ export interface N8NWebhookPayload {
   query_id: string
   user_id: string
   prompt_text: string
+  response_id: string // Pre-generated UUID for this response
 }
 
 export interface N8NWebhookResponse {
   success: boolean
   query_id: string
+  response_id: string // The pre-generated UUID sent in payload
   source_type: SourceType
-  response_data: any
+  response_data: string // n8n returns pre-formatted text
   execution_time: number
   error?: string
 }

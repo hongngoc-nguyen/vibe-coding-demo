@@ -232,7 +232,7 @@ export type Database = {
           response_id: string
           query_id: string
           source_type: 'google_search' | 'google_ai_mode'
-          response_data: any
+          response_data: string
           response_status: 'success' | 'failed'
           execution_time: number | null
           error_message: string | null
@@ -242,7 +242,7 @@ export type Database = {
           response_id?: string
           query_id: string
           source_type: 'google_search' | 'google_ai_mode'
-          response_data: any
+          response_data: string
           response_status?: 'success' | 'failed'
           execution_time?: number | null
           error_message?: string | null
@@ -252,7 +252,7 @@ export type Database = {
           response_id?: string
           query_id?: string
           source_type?: 'google_search' | 'google_ai_mode'
-          response_data?: any
+          response_data?: string
           response_status?: 'success' | 'failed'
           execution_time?: number | null
           error_message?: string | null
