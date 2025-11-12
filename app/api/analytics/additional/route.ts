@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 function getNextDay(dateString: string): string {
   const date = new Date(dateString)
@@ -9,17 +9,7 @@ function getNextDay(dateString: string): string {
 
 export async function GET(request: NextRequest) {
   try {
-    // Use service role to bypass RLS for analytics data
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const supabase = await createClient()
 
     const { searchParams } = new URL(request.url)
     const dateFilter = searchParams.get('date') || 'all'
@@ -146,9 +136,9 @@ function processTopEntities(data: any[], entityMap: Map<string, string>) {
     }
   })
 
-  // Convert to array, sort by count descending, take top 20
+  // Convert to array, sort by count descending, take top 10
   return Array.from(entityCounts.entries())
     .map(([entity, citations]) => ({ entity, citations }))
     .sort((a, b) => b.citations - a.citations)
-    .slice(0, 20)
+    .slice(0, 10)
 }
