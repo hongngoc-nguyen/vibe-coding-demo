@@ -20,11 +20,11 @@ export function AdditionalMentions() {
     availablePlatforms: []
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [displayLimit, setDisplayLimit] = useState(25)
+  const [displayLimit, setDisplayLimit] = useState(100)
 
   useEffect(() => {
     fetchAdditionalData()
-    setDisplayLimit(25) // Reset display limit when filters change
+    setDisplayLimit(100) // Reset display limit when filters change
   }, [citationDateFilter, citationPlatformFilter])
 
   const fetchAdditionalData = async () => {
@@ -137,11 +137,11 @@ export function AdditionalMentions() {
       <Card>
         <CardHeader>
           <CardTitle>Top Cited Web Pages in the Industry</CardTitle>
-          <CardDescription>Top 10 web pages ranked by citation count from responses excluding Brand and Competitors</CardDescription>
+          <CardDescription>Top 20 web pages ranked by citation count from responses excluding Brand and Competitors</CardDescription>
         </CardHeader>
         <CardContent>
           {data.topEntities.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={500}>
               <BarChart data={data.topEntities} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis type="number" className="text-xs" />
@@ -151,7 +151,7 @@ export function AdditionalMentions() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[500px] flex items-center justify-center text-gray-500">
               No entity data available
             </div>
           )}
@@ -198,12 +198,18 @@ export function AdditionalMentions() {
             </TableBody>
           </Table>
           {data.citations.length > displayLimit && (
-            <div className="mt-4 flex justify-center">
+            <div className="mt-4 flex justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setDisplayLimit(prev => prev + 25)}
+                onClick={() => setDisplayLimit(prev => prev + 50)}
               >
-                Load More ({data.citations.length - displayLimit} remaining)
+                Load More 50 ({data.citations.length - displayLimit} remaining)
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => setDisplayLimit(data.citations.length)}
+              >
+                Show All ({data.citations.length} total)
               </Button>
             </div>
           )}

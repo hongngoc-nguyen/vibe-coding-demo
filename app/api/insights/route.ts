@@ -217,5 +217,5 @@ function generateInsights(data: any) {
     })
   }
 
-  return insights.slice(0, 3) // Limit to 3 insights
+  return insights.slice(0, 5) // Limit to 5 insights
 }
